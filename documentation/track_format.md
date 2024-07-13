@@ -34,19 +34,20 @@ If you wish to attach several query tracks to a single target track, then you wi
 
 *Example.* Two marker_m query tracks attached to the hist track. Query track with rectangle markers will be drawn last:
 
-AAAAA$hist - target
+AAAAA<strong>&</strong>hist - target
 
-BBBBB&marker_m$ellipse@AAAAA - query attached to the target AAAAA
+BBBBB<strong>&</strong>marker_m<strong>$</strong>ellipse<strong>@</strong>AAAAA - query attached to the target AAAAA
 
-CCCCC&marker_m$rectangle@BBBBB - query2 attached to the same target AAAAA, but will be drawn after query 1
+CCCCC<strong>&</strong>marker_m<strong>$</strong>rectangle<strong>@</strong>BBBBB - query2 attached to the same target AAAAA, but will be drawn after query 1
 
 **Allowed types of the tracks:**
 1. **hist**          - use a full height of a track to plot a stacked histogram. Sum of components must not exceed 1.00 in any window. Use a script "prepare_hist_for_tracks.py" to prepare your values for the track.
 2. **window**        - use a full height of the region to plot a rectangle.
-3. **plot_m**        - draw a curve over whole track with points set at the middles of the regions
-4. **plot_e**        - draw a curve over whole track with points set at the starts and ends of the regions
-5. **marker_m**      - draw a marker at the middle of the region. Allows track subtypes. See **Allowed types of the markers**.
-6. **marker_e**      - draw marker at each border of the region. Allows track subtypes. See **Allowed types of the markers**.
+3. **bool**          - boolean track, use a full height of the region to plot a rectangle
+4. **plot_m**        - draw a curve over whole track with points set at the middles of the regions
+5. **plot_e**        - draw a curve over whole track with points set at the starts and ends of the regions
+6. **marker_m**      - draw a marker at the middle of the region. Allows track subtypes. See **Allowed types of the markers**.
+7. **marker_e**      - draw marker at each border of the region. Allows track subtypes. See **Allowed types of the markers**.
 
 **Allowed types of the markers**:
 
