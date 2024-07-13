@@ -26,7 +26,7 @@ First row of the file must start from '#' symbol and contain a header with colum
 Some track types may include several internal separators (zero, one or more) "$" if it is necessary to set a specific subtype of the track or additional parameters.
 Check specific tracks in **Allowed types of the tracks**. For example, "AAAAA&marker_m$ellipse" is a valid and meanins track type "marker_m" and marker type "ellipse" for track "AAAAA"  
 
-**Attaching tracks:**
+**Attached tracks:**
 
 In some cases you may need to draw one track (query) over other one (target).
 For this just add **@target_track_name** to the query track after the type.
