@@ -22,10 +22,12 @@ First row of the file must start from '#' symbol and contain a header with colum
 | track1&par1 | Values for 'par1' of 'track1' | comma-separated list of values (str, float, int or bool) | Column name encodes parameter of the track. It should include *track name* and *parameter name*, separated by *&*. See **Recognizable track parameters** for details. If parameter is absent in the list, it will be ignored. |
 
 **Track types:**
+
 Some track types may include several internal separators (zero, one or more) "$" if it is necessary to set a specific subtype of the track or additional parameters.
 Check specific tracks in **Allowed types of the tracks**. For example, "AAAAA&marker_m$ellipse" is a valid and meanins track type "marker_m" and marker type "ellipse" for track "AAAAA"  
 
 **Attaching tracks:**
+
 In some cases you may need to draw one track (query) over other one (target).
 For this just add **@target_track_name** to the query track after the type.
 If you wish to attach several query tracks to a single target track, then you will need  specify a query-target chain for each of queries in the order of drawing.  
@@ -33,7 +35,9 @@ If you wish to attach several query tracks to a single target track, then you wi
 *Example.* Two marker_m query tracks attached to the hist track. Query track with rectangle markers will be drawn last:
 
 AAAAA$hist - target
+
 BBBBB&marker_m$ellipse@AAAAA - query attached to the target AAAAA
+
 CCCCC&marker_m$rectangle@BBBBB - query2 attached to the same target AAAAA, but will be drawn after query 1
 
 **Allowed types of the tracks:**
