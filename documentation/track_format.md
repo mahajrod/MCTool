@@ -42,7 +42,7 @@ CCCCC&marker_m$rectangle@BBBBB - query2 attached to the same target AAAAA, but w
 
 **Allowed types of the tracks:**
 1. **hist**          - use a full height of a track to plot a stacked histogram. Sum of components must not exceed 1.00 in any window. Use a script "prepare_hist_for_tracks.py" to prepare your values for the track.
-2. **window**        - use a full height of the window to plot a rectangle.
+2. **window**        - use a full height of the region to plot a rectangle.
 3. **plot_m**        - draw a curve over whole track with points set at the middles of the regions
 4. **plot_e**        - draw a curve over whole track with points set at the starts and ends of the regions
 5. **marker_m**      - draw a marker at the middle of the region. Allows track subtypes. See **Allowed types of the markers**.
