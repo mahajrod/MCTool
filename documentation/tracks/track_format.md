@@ -72,20 +72,22 @@ It will try to check all the types one by one:
 ```mermaid
 
 flowchart TD
-    A[Column values] --> B{is marker?}
-    B -->|Yes| C[Recognized type]:::Sucess
-    B -->|No| D{Is plot?}
+    A[Column values] --> B{is marker?}:::BranchingType
+    B -->|Yes| C[Recognized type]:::SucessType
+    B -->|No| D{Is plot?}:::BranchingType
     D -->|Yes| C
-    D -->|No| E{Is window?}
+    D -->|No| E{Is window?}:::BranchingType
     E -->|Yes| C
-    E -->|No| F{Is hist?}
+    E -->|No| F{Is hist?}:::BranchingType
     F -->|Yes| C
-    F -->|No| G[Unrecognized type]:::Fail
+    F -->|No| G[Unrecognized type]:::FailType
     C --> I[Continue]
     G --> K[Exit]
     
-    classDef Sucess fill:green
-    classDef Fail fill:red
+    classDef SucessType fill:#4De800,font-color:black
+    classDef FailType fill:#D30000,font-color:black
+    classDef ResultType fill:#60CEED,font-color:black
+    classDef BranchingType fill:#FFD900,font-color:black
 ```
 More detailed diagram:
 ```mermaid
@@ -115,8 +117,8 @@ flowchart TD
     Result --> I[Continue parsing]
     Error --> Z[Exit script]:::FailType
     
-    classDef SucessType fill:green,font-color:black
-    classDef FailType fill:red,font-color:black
-    classDef ResultType fill:blue,font-color:black
+    classDef SucessType fill:#4De800,font-color:black
+    classDef FailType fill:#D30000,font-color:black
+    classDef ResultType fill:#60CEED,font-color:black
     classDef BranchingType fill:#FFD900,font-color:black
 ```
