@@ -81,11 +81,11 @@ flowchart TD
     E -->|No| F{Is hist?}:::BranchingType
     F -->|Yes| C
     F -->|No| G[Unrecognized type]:::FailType
-    C --> I[Continue]
+    C --> I[Continue parsing]
     G --> K[Exit]
     
     classDef SucessType fill:#93C572,font-color:black
-    classDef FailType fill:##F94449,font-color:black
+    classDef FailType fill:#F94449,font-color:black
     classDef ResultType fill:#60CEED,font-color:black
     classDef BranchingType fill:#FFD900,font-color:black
 ```
