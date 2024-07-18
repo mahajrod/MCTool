@@ -82,7 +82,7 @@ flowchart TD
     F -->|Yes| C
     F -->|No| G[Unrecognized type]:::FailType
     C --> I[Continue parsing]
-    G --> K[Exit]
+    G --> K[Exit script]:::FailType
     
     classDef SucessType fill:#93C572,font-color:black
     classDef FailType fill:#F94449,font-color:black
