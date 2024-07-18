@@ -84,8 +84,8 @@ flowchart TD
     C --> I[Continue]
     G --> K[Exit]
     
-    classDef SucessType fill:#4De800,font-color:black
-    classDef FailType fill:#D30000,font-color:black
+    classDef SucessType fill:#93C572,font-color:black
+    classDef FailType fill:##F94449,font-color:black
     classDef ResultType fill:#60CEED,font-color:black
     classDef BranchingType fill:#FFD900,font-color:black
 ```
@@ -117,8 +117,8 @@ flowchart TD
     Result --> I[Continue parsing]
     Error --> Z[Exit script]:::FailType
     
-    classDef SucessType fill:#4De800,font-color:black
-    classDef FailType fill:#D30000,font-color:black
+    classDef SucessType fill:#93C572,font-color:black
+    classDef FailType fill:#F94449,font-color:black
     classDef ResultType fill:#60CEED,font-color:black
     classDef BranchingType fill:#FFD900,font-color:black
 ```
