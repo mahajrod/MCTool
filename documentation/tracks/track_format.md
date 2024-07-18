@@ -23,8 +23,8 @@ First row of the file must start from '#' symbol and contain a header with colum
 
 **Track types:**
 
-Some track types may include several internal separators (zero, one or more) "$" if it is necessary to set a specific subtype of the track or additional parameters.
-Check specific tracks in **Allowed types of the tracks**. For example, "AAAAA&marker_m$ellipse" is a valid and meanins track type "marker_m" and marker type "ellipse" for track "AAAAA"  
+Some track types may include several internal separators (zero, one or more) "$" if it is necessary to set a specific subtype or features of the track or additional parameters.
+See **Allowed types of the tracks** for tracks supporting such settings.  
 
 **Attached tracks:**
 
@@ -36,35 +36,87 @@ If you wish to attach several query tracks to a single target track, then you wi
 
 AAAAA<strong>&</strong>hist - target
 
-BBBBB<strong>&</strong>marker_m<strong>$</strong>ellipse<strong>@</strong>AAAAA - query attached to the target AAAAA
+BBBBB<strong>&</strong>marker_m<strong>@</strong>AAAAA - query attached to the target AAAAA
 
-CCCCC<strong>&</strong>marker_m<strong>$</strong>rectangle<strong>@</strong>BBBBB - query2 attached to the same target AAAAA, but will be drawn after query 1
+CCCCC<strong>&</strong>marker_m<strong>@</strong>BBBBB - query2 attached to the same target AAAAA, but will be drawn after query 1
 
 **Allowed types of the tracks:**
 1. **hist**          - use a full height of a track to plot a stacked histogram. Sum of components must not exceed 1.00 in any window. Use a script "prepare_hist_for_tracks.py" to prepare your values for the track.
-2. **window**        - use a full height of the region to plot a rectangle.
-3. **bool**          - boolean track, use a full height of the region to plot a rectangle
-4. **plot_m**        - draw a curve over whole track with points set at the middles of the regions
-5. **plot_e**        - draw a curve over whole track with points set at the starts and ends of the regions
-6. **marker_m**      - draw a marker at the middle of the region. Allows track subtypes. See **Allowed types of the markers**.
-7. **marker_e**      - draw marker at each border of the region. Allows track subtypes. See **Allowed types of the markers**.
+2. **window**        - use a full height and width of the region to plot a rectangle.
+3. **plot**          - draw a curve over whole track. By default, points of curve localize at the middle of the region. Allows subtypes. See track_types/plot.md for details
+4. **marker**        - draw markers. By default, markers localize at the middle of the region. Allows subtypes. See track_types/marker.md for details
 
-**Allowed types of the markers**:
-
-1. **rect**      - draw a rectangle marker with start and stop on the edges of region, but with height smaller than track.
-2. **ellipse**   - draw an ellipse with center at the middle between start and stop, height and x/y ratio are controlled by the feature style. Can be used to draw a circle if X and Y axis are in a different scale 
-3. **circle**    - draw a circle with center at the middle between start and stop. It will look as an ellipse on the plot, if  X and Y axis are in a different scale. Use **ellipse** type to avoid this issue.
 
 **Recognizable track parameters** implemented so far:
-1. **colors** - comma-separated list of matplotlib color names or color hexs or keywords ("auto" or "default") 
+1. **colors** - comma-separated list of matplotlib color names or color hexs or keywords ("default") 
 2. **bg_color** - matplotlib color name or color hex or keyword ("default")
 3. **height_offset** - height offset for the center of the marker. Fraction or keyword ("default")
 
 **Keywords**:
 1. **default** - use default from the script (vary from script to script)
-2. **auto** - calculate according the logic implemented in the script (vary from script to script) if it exists. Otherwise, use default
+
 
 **Example**:
 ```
+#scaffold_id	start	end	admixture&hist	admixture&colors	admixture&bg_color	het&window	het&colors	roh&bool	roh&colors
+HiC_scaffold_1	0	1000000	0.496093,0.503907	#377EB8,#FF7F00	white	1.035	#00D4FF	False	default
+HiC_scaffold_1	100000	1100000	0.497003,0.502997	#377EB8,#FF7F00	white	1.119	#00D4FF	False	default
+HiC_scaffold_1	200000	1200000	0.497429,0.502571	#377EB8,#FF7F00	white	1.159	#00D4FF	False	default
+```
 
+# Automatic detection of the track type
+
+If track type is not specified in the column name, MACE can try to automatically detect it.
+It will try to check all the types one by one:
+
+```mermaid
+
+flowchart TD
+    A[Column values] --> B{is marker?}
+    B -->|Yes| C[Recognized type]:::Sucess
+    B -->|No| D{Is plot?}
+    D -->|Yes| C
+    D -->|No| E{Is window?}
+    E -->|Yes| C
+    E -->|No| F{Is hist?}
+    F -->|Yes| C
+    F -->|No| G[Unrecognized type]:::Fail
+    C --> I[Continue]
+    G --> K[Exit]
+    
+    classDef Sucess fill:green
+    classDef Fail fill:red
+```
+More detailed diagram:
+```mermaid
+
+flowchart TD
+    Input[First row value] --> MarkerTest{Registered\n marker?}:::BranchingType
+    MarkerTest -->|Yes| Marker[Marker]:::ResultType
+    Marker --> Result[Recognized type]:::SucessType
+    MarkerTest -->|No| PlotTest1{Convertable\n to int?}:::BranchingType
+    PlotTest1 -->|Yes| Plot[Plot]:::ResultType
+    Plot --> Result
+    PlotTest1 -->|No| PlotTest2{Convertable\n to float?}:::BranchingType
+    PlotTest2 -->|Yes| Plot[Plot]
+    PlotTest2 -->|No| WindowTest1{Registered\n color name?}:::BranchingType
+    WindowTest1 -->|Yes| Window[Window]:::ResultType
+    Window --> Result
+    WindowTest1 -->|No| WindowTest2{Convertable\n  to RGB?}:::BranchingType
+    WindowTest2 -->|Yes| Window
+    WindowTest2-->|No| WindowTest3{Convertable\n to RGBA?}:::BranchingType
+    WindowTest3 -->|Yes| Window
+    WindowTest3 -->|No| HistTest1{More than\n one value?}:::BranchingType
+    HistTest1 --> |Yes| HistTest2{All convertable\n to float?}:::BranchingType
+    HistTest2 --> |Yes| Hist[Hist]:::ResultType
+    HistTest1 -->|No| Error[Unrecognized type]:::FailType
+    Hist --> Result
+
+    Result --> I[Continue parsing]
+    Error --> Z[Exit script]:::FailType
+    
+    classDef SucessType fill:green,font-color:black
+    classDef FailType fill:red,font-color:black
+    classDef ResultType fill:blue,font-color:black
+    classDef BranchingType fill:#FFD900,font-color:black
 ```
