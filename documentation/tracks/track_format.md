@@ -72,17 +72,17 @@ It will try to check all the types one by one:
 ```mermaid
 
 flowchart TD
-    A[Column values] --> B{is marker?}:::BranchingType
-    B -->|Yes| C[Recognized type]:::SucessType
-    B -->|No| D{Is plot?}:::BranchingType
-    D -->|Yes| C
-    D -->|No| E{Is window?}:::BranchingType
-    E -->|Yes| C
-    E -->|No| F{Is hist?}:::BranchingType
-    F -->|Yes| C
-    F -->|No| G[Unrecognized type]:::FailType
-    C --> I[Continue parsing]
-    G --> K[Exit script]:::FailType
+    A[Column values] --> MarkerTest{is marker?}:::BranchingType
+    MarkerTest -->|Yes| Result[Recognized type]:::SucessType
+    MarkerTest -->|No| PlotTest{Is plot?}:::BranchingType
+    PlotTest -->|Yes| Result
+    PlotTest -->|No| WindowTest{Is window?}:::BranchingType
+    WindowTest -->|Yes| Result
+    WindowTest -->|No| HistTest{Is hist?}:::BranchingType
+    HistTest -->|Yes| Result
+    HistTest -->|No| Fail[Unrecognized type]:::FailType
+    Result --> Continue[Continue parsing]
+    Fail --> Exit[Exit script]:::FailType
     
     classDef SucessType fill:#93C572,font-color:black
     classDef FailType fill:#F94449,font-color:black
@@ -114,8 +114,8 @@ flowchart TD
     HistTest1 -->|No| Error[Unrecognized type]:::FailType
     Hist --> Result
 
-    Result --> I[Continue parsing]
-    Error --> Z[Exit script]:::FailType
+    Result --> Continue[Continue parsing]
+    Error --> Exit[Exit script]:::FailType
     
     classDef SucessType fill:#93C572,font-color:black
     classDef FailType fill:#F94449,font-color:black
