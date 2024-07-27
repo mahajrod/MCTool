@@ -66,21 +66,26 @@ HiC_scaffold_1	200000	1200000	0.497429,0.502571	#377EB8,#FF7F00	white	1.159	#00D
 
 # Automatic detection of the track type
 
-If track type is not specified in the column name, MACE can try to automatically detect it.
-It will try to check all the types one by one:
+If track type is not specified in the column name, MACE will first try to automatically detect it.
+It will try to check all the recognizable track types one by one. 
+If it fails, MACE will use default track type. If default track type is not set, an error is triggered.
 
 ```mermaid
 
 flowchart TD
-    A[Column values] --> MarkerTest{is marker?}:::BranchingType
+    Input[Data] --> ParsingTest{Is track\n type set?}:::BranchingType
+    ParsingTest -->|Yes| Result[Recognized type]:::SucessType
+    ParsingTest -->|No| MarkerTest{Is it marker?}:::BranchingType
     MarkerTest -->|Yes| Result[Recognized type]:::SucessType
-    MarkerTest -->|No| PlotTest{Is plot?}:::BranchingType
+    MarkerTest -->|No| PlotTest{Is it plot?}:::BranchingType
     PlotTest -->|Yes| Result
-    PlotTest -->|No| WindowTest{Is window?}:::BranchingType
+    PlotTest -->|No| WindowTest{Is it window?}:::BranchingType
     WindowTest -->|Yes| Result
-    WindowTest -->|No| HistTest{Is hist?}:::BranchingType
+    WindowTest -->|No| HistTest{Is it hist?}:::BranchingType
     HistTest -->|Yes| Result
-    HistTest -->|No| Fail[Unrecognized type]:::FailType
+    HistTest -->|No| DefaultTest{Is default\n type set?}:::BranchingType
+    DefaultTest -->|Yes| Result
+    DefaultTest -->|No| Fail[Unrecognized type]:::FailType
     Result --> Continue[Continue parsing]
     Fail --> Exit[Exit script]:::FailType
     
@@ -89,7 +94,7 @@ flowchart TD
     classDef ResultType fill:#60CEED,font-color:black
     classDef BranchingType fill:#FFD900,font-color:black
 ```
-More detailed diagram:
+More detailed diagram of auto detection:
 ```mermaid
 
 flowchart TD
