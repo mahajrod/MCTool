@@ -93,18 +93,18 @@
       6. T<sub>xh</sub>   - height of the tracks' sX axis (including ticks and label)
       7. T<sub>sb</sub>   - bottom space
 
-Formulas:
+# Formulas:
 
-Track width T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
+*Track width* T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
 
 | dimension | T<sub>sl</sub>       | T<sub>yw</sub>  | T<sub>ys</sub>   | T<sub>bw</sub> | T<sub>sb</sub> |
 |-----------|----------------------|-----------------|------------------|----------------|----------------|
 | source    | style                | auto from style | style            | data           | style          |
 | values    | fraction<sup>*</sup> | fraction        | fraction         | absolute       | fraction       |
 
-* fraction of max T<sub>bw</sub>
+\* fraction of max T<sub>bw</sub>
 
-Track height T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub>
+*Track height* T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub>
 
 | dimension | T<sub>st</sub> | T<sub>lh</sub>   | T<sub>lsb</sub> | T<sub>bh</sub> | T<sub>xst</sub> | T<sub>xh</sub>  | T<sub>sb</sub> |
 |-----------|----------------|------------------|-----------------|----------------|-----------------|-----------------|----------------|
