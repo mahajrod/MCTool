@@ -82,13 +82,18 @@
       1. T<sub>sl</sub>   - left space
       2. T<sub>yw</sub>   - width of the track's Y axis (including ticks and label)
       3. T<sub>ys</sub>   - space between track's Y axis and track body
-      4. T<sub>w</sub>    - width of the track
-      5H<sub>sb</sub>   - right space
+      4. T<sub>bw</sub>    - width of the track body
+      5. T<sub>sb</sub>    - right space
    2. Vertical dimensions
       1. T<sub>st</sub>   - top space
       2. T<sub>lh</sub>   - height of the track label
       3. T<sub>lsb</sub>  - space between track label and track body
-      4. T<sub>h</sub>    - height of the  track body
+      4. T<sub>bh</sub>    - height of the  track body
       5. T<sub>xst</sub>  - space between track bodies and track's X axis 
       6. T<sub>xh</sub>   - height of the tracks' sX axis (including ticks and label)
       7. T<sub>sb</sub>   - bottom space
+
+Formulas:
+
+Track width T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
+Track height T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub> 
