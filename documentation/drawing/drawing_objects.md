@@ -96,7 +96,8 @@
 
 # Formulas:
 
-**Track width** T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
+## Track width
+T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
 
 | dimension | T<sub>sl</sub>       | T<sub>yw</sub>  | T<sub>ys</sub>   | T<sub>bw</sub> | T<sub>sb</sub> |
 |-----------|----------------------|-----------------|------------------|----------------|----------------|
@@ -105,7 +106,8 @@
 
 \* fraction of max (T<sub>bw</sub>)
 
-**Track height** T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub>
+## Track height
+T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub>
 
 | dimension | T<sub>st</sub> | T<sub>lh</sub>   | T<sub>lsb</sub> | T<sub>bh</sub> | T<sub>xst</sub> | T<sub>xh</sub>  | T<sub>sb</sub> |
 |-----------|----------------|------------------|-----------------|----------------|-----------------|-----------------|----------------|
@@ -113,8 +115,10 @@
 | values    | absolute       | absolute         | absolute        | absolute       | absolute        | absolute        | absolute       |
 
 
-**Horizontal track group width** H<sub>w</sub> = H<sub>sl</sub> + H<sub>yw</sub> + H<sub>ys</sub> + H<sub>bw</sub> + H<sub>sr</sub>
-                                 H<sub>bw</sub = sum(T<sub>wi</sub>) + (N-1)* H<sub>sti</sub>
+## Horizontal track group width
+H<sub>w</sub> = H<sub>sl</sub> + H<sub>yw</sub> + H<sub>ys</sub> + H<sub>bw</sub> + H<sub>sr</sub>
+                                 
+H<sub>bw</sub = sum(T<sub>wi</sub>) + (N-1)* H<sub>sti</sub>
 
 | dimension | H<sub>sl</sub>       | H<sub>yw</sub>  | H<sub>ys</sub> | T<sub>wi</sub> | H<sub>sti</sub> | H<sub>sr</sub> |
 |-----------|----------------------|-----------------|----------------|----------------|-----------------|----------------|
@@ -124,15 +128,18 @@
 \* fraction max(sum(T<sub>bw</sub>) per horizontal track group) 
 
 
-**Horizontal track group height** H<sub>h</sub> = H<sub>st</sub> + H<sub>ht</sub> + H<sub>xst</sub> + H<sub>xh</sub> + H<sub>sb</sub>
+## Horizontal track group height
+H<sub>h</sub> = H<sub>st</sub> + H<sub>ht</sub> + H<sub>xst</sub> + H<sub>xh</sub> + H<sub>sb</sub>
 
 | dimension | H<sub>st</sub> | H<sub>ht</sub>     | H<sub>xst</sub> | H<sub>xh</sub>  | H<sub>sb</sub> |
 |-----------|----------------|--------------------|-----------------|-----------------|----------------|
 | source    | style          | max(T<sub>h</sub>) | style           | auto from style | style          |
 | values    | absolute       | absolute           | absolute        | absolute        | absolute       |
 
-**Vertical track group width** V<sub>w</sub> = V<sub>sl</sub> + V<sub>yw</sub> + V<sub>ys</sub> + V<sub>bw</sub> + V<sub>sr</sub>
-                               V<sub>bw</sub = max(H<sub>w</sub>)
+## Vertical track group width
+V<sub>w</sub> = V<sub>sl</sub> + V<sub>yw</sub> + V<sub>ys</sub> + V<sub>bw</sub> + V<sub>sr</sub>
+                               
+V<sub>bw</sub = max(H<sub>w</sub>)
 
 | dimension | V<sub>sl</sub>       | V<sub>yw</sub>  | V<sub>ys</sub> | V<sub>bw</sub> | V<sub>sr</sub> |
 |-----------|----------------------|-----------------|----------------|----------------|----------------|
@@ -141,8 +148,10 @@
 
 \* fraction of V<sub>bw</sub>
 
-**Vertical track group height** V<sub>h</sub> = V<sub>st</sub> + V<sub>bh</sub> + V<sub>xst</sub> + V<sub>xh</sub> + V<sub>sb</sub>
-                                V<sub>bh</sub> = sum(H<sub>hi</sub>) + (N-1)* V<sub>his</sub>
+## Vertical track group height*
+V<sub>h</sub> = V<sub>st</sub> + V<sub>bh</sub> + V<sub>xst</sub> + V<sub>xh</sub> + V<sub>sb</sub>
+                                
+V<sub>bh</sub> = sum(H<sub>hi</sub>) + (N-1)* V<sub>his</sub>
 
 | dimension | V<sub>st</sub> | H<sub>hi</sub> | V<sub>his</sub> | V<sub>xst</sub> | V<sub>xh</sub>  | V<sub>sb</sub> |
 |-----------|----------------|----------------|-----------------|-----------------|-----------------|----------------|
@@ -150,8 +159,10 @@
 | values    | absolute       | absolute       | absolute        | absolute        | absolute        | absolute       |
 
 
-**Subplot width** S<sub>w</sub> = S<sub>sl</sub> + S<sub>vlw</sub> + S<sub>vls</sub> + S<sub>cw</sub> + S<sub>cs</sub> + S<sub>hlw</sub> + S<sub>hls</sub> + S<sub>ylw</sub> + S<sub>ys</sub> + S<sub>bw</sub> + S<sub>lsl</sub> + S<sub>lw</sub> + S<sub>sr</sub>
-                  S<sub>bw</sub = max(V<sub>w</sub>)
+## Subplot width
+S<sub>w</sub> = S<sub>sl</sub> + S<sub>vlw</sub> + S<sub>vls</sub> + S<sub>cw</sub> + S<sub>cs</sub> + S<sub>hlw</sub> + S<sub>hls</sub> + S<sub>ylw</sub> + S<sub>ys</sub> + S<sub>bw</sub> + S<sub>lsl</sub> + S<sub>lw</sub> + S<sub>sr</sub>
+
+S<sub>bw</sub = max(V<sub>w</sub>)
 
 | dimension | S<sub>sl</sub>       | S<sub>vlw</sub> | S<sub>vls</sub> | S<sub>cw</sub> | S<sub>cs</sub> | S<sub>hlw</sub> | S<sub>hls</sub> | S<sub>ylw</sub> | S<sub>ys</sub> | S<sub>bw</sub> | S<sub>lsl</sub> | S<sub>lw</sub> | S<sub>sr</sub> |
 |-----------|----------------------|-----------------|-----------------|----------------|----------------|-----------------|-----------------|-----------------|----------------|----------------|-----------------|----------------|----------------|
@@ -160,8 +171,10 @@
 
 \* fraction of S<sub>bw</sub>
 
-**Subplot height** V<sub>h</sub> = S<sub>bh</sub> + V<sub>xst</sub> + V<sub>xh</sub> + V<sub>sb</sub>
-                   V<sub>bh</sub> = sum(V<sub>hi</sub>) + (N-1)* S<sub>vs</sub>
+## Subplot height
+V<sub>h</sub> = S<sub>bh</sub> + V<sub>xst</sub> + V<sub>xh</sub> + V<sub>sb</sub>
+
+V<sub>bh</sub> = sum(V<sub>hi</sub>) + (N-1)* S<sub>vs</sub>
 
 | dimension | V<sub>hi</sub> | S<sub>vs</sub> | S<sub>his</sub> | S<sub>xst</sub> | S<sub>xh</sub>  | S<sub>sb</sub> |
 |-----------|----------------|----------------|-----------------|-----------------|-----------------|----------------|
