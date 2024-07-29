@@ -22,14 +22,14 @@
       7. S<sub>hls</sub>  - space between horizontal track group label and subplot's Y axis
       8. S<sub>ylw</sub>  - width of Y axis (including ticks and label)
       9. S<sub>ys</sub>   - space between Y axis and vertical track groups
-      10. S<sub>vw</sub>  - width of vertical track groups
+      10. S<sub>bw</sub>  - width of subplot body
       11. S<sub>lsl</sub> - space between vertical track groups and legend
       12. S<sub>lw</sub>  - width of the legend
       13. S<sub>sr</sub>  - right space
    2. Vertical dimensions
-      1. S<sub>vh1</sub>  - height of the first vertical track group
+      1. V<sub>h1</sub>  - height of the first vertical track group
       2. S<sub>vs</sub>   - space between vertical track groups
-      3. S<sub>vh2</sub>  - height of the second vertical track group
+      3. V<sub>h2</sub>  - height of the second vertical track group
       
           ..................................................................
    
@@ -43,34 +43,35 @@
       1. V<sub>sl</sub>   - left space 
       2. V<sub>yw</sub>   - width of the vertical track group's Y axis (including ticks and label)
       3. V<sub>ys</sub>   - space between vertical track group's Y axis and horizontal track groups
-      4. V<sub>hw</sub>   - width of the horizontal track groups 
+      4. V<sub>bw</sub>   - width width of the vertical track group body 
       5. V<sub>sr</sub>   - right space
-      6. V<sub>w</sub>    - whole width of the vertical track groups
    2. Vertical dimensions
       1. V<sub>st</sub>   - top space
-      2. V<sub>hh1</sub>  - height of the first horizontal track group
-      3. V<sub>his</sub>  - space between horizontal track groups
-      4. V<sub>hh2</sub>  - height of the second horizontal track group
+      2. V<sub>bh</sub>   - height of the vertical track group body
+      3. H<sub>h1</sub>   - height of the first horizontal track group
+      4. V<sub>his</sub>  - space between horizontal track groups
+      5. H<sub>h2</sub>   - height of the second horizontal track group
     
          .....................................................................
 
-      5. V<sub>Vhhn</sub>  - height of the last horizontal track group
-      6. V<sub>Vxst</sub>  - space between the last horizontal track group and vertical track group's X axis 
-      7. V<sub>Vxh</sub>   - height of the X axis (including ticks and label)
-      8. V<sub>Vsb</sub>   - bottom space
+      6. H<sub>hn</sub>   - height of the last horizontal track group
+      7. V<sub>xst</sub>  - space between the last horizontal track group and vertical track group's X axis 
+      8. V<sub>xh</sub>   - height of the X axis (including ticks and label)
+      9. V<sub>sb</sub>   - bottom space
 3. Dimensions of the horizontal track group
    1. Horizontal dimensions
       1. H<sub>sl</sub>   - left space
       2. H<sub>yw</sub>   - width of the horizontal track group's Y axis (including ticks and label)
       3. H<sub>ys</sub>   - space between horizontal track group's Y axis and first track
-      4. H<sub>tw1</sub>  - width of the first track 
-      5. H<sub>sti</sub>  - space between tracks
-      6. H<sub>tw2</sub>  - width of the second track
+      4. H<sub>bw</sub>   - width of the horizontal track group body 
+      5. T<sub>w1</sub>   - width of the first track
+      6. H<sub>sti</sub>  - space between tracks
+      7. T<sub>w2</sub>   - width of the second track
     
          .....................................................................
 
-      7. H<sub>twn</sub>  - width of the last track
-      8. H<sub>sb</sub>   - right space
+      8. T<sub>wn</sub>  - width of the last track
+      9. H<sub>sb</sub>   - right space
    2. Vertical dimensions
       1. H<sub>st</sub>   - top space
       2. H<sub>ht</sub>   - height of the tracks
@@ -95,7 +96,7 @@
 
 # Formulas:
 
-*Track width* T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
+**Track width** T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
 
 | dimension | T<sub>sl</sub>       | T<sub>yw</sub>  | T<sub>ys</sub>   | T<sub>bw</sub> | T<sub>sb</sub> |
 |-----------|----------------------|-----------------|------------------|----------------|----------------|
@@ -104,7 +105,7 @@
 
 \* fraction of max (T<sub>bw</sub>)
 
-*Track height* T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub>
+**Track height** T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub>
 
 | dimension | T<sub>st</sub> | T<sub>lh</sub>   | T<sub>lsb</sub> | T<sub>bh</sub> | T<sub>xst</sub> | T<sub>xh</sub>  | T<sub>sb</sub> |
 |-----------|----------------|------------------|-----------------|----------------|-----------------|-----------------|----------------|
@@ -112,7 +113,8 @@
 | values    | absolute       | absolute         | absolute        | absolute       | absolute        | absolute        | absolute       |
 
 
-*Horizontal track group width* H<sub>w</sub> = H<sub>sl</sub> + H<sub>yw</sub> + H<sub>ys</sub> + sum(T<sub>wi</sub>) + (N-1)* H<sub>sti</sub> + H<sub>sr</sub>
+**Horizontal track group width** H<sub>w</sub> = H<sub>sl</sub> + H<sub>yw</sub> + H<sub>ys</sub> + H<sub>bw</sub> + H<sub>sr</sub>
+                                 H<sub>bw</sub = sum(T<sub>wi</sub>) + (N-1)* H<sub>sti</sub>
 
 | dimension | H<sub>sl</sub>       | H<sub>yw</sub>  | H<sub>ys</sub> | T<sub>wi</sub> | H<sub>sti</sub> | H<sub>sr</sub> |
 |-----------|----------------------|-----------------|----------------|----------------|-----------------|----------------|
@@ -121,10 +123,47 @@
 
 \* fraction max(sum(T<sub>bw</sub>) per horizontal track group) 
 
-*Horizontal track group height* H<sub>h</sub> = H<sub>st</sub> + H<sub>ht</sub> + H<sub>xst</sub> + H<sub>xh</sub> + H<sub>sb</sub>
+
+**Horizontal track group height** H<sub>h</sub> = H<sub>st</sub> + H<sub>ht</sub> + H<sub>xst</sub> + H<sub>xh</sub> + H<sub>sb</sub>
 
 | dimension | H<sub>st</sub> | H<sub>ht</sub>     | H<sub>xst</sub> | H<sub>xh</sub>  | H<sub>sb</sub> |
 |-----------|----------------|--------------------|-----------------|-----------------|----------------|
 | source    | style          | max(T<sub>h</sub>) | style           | auto from style | style          |
 | values    | absolute       | absolute           | absolute        | absolute        | absolute       |
 
+**Vertical track group width** V<sub>w</sub> = V<sub>sl</sub> + V<sub>yw</sub> + V<sub>ys</sub> + V<sub>bw</sub> + V<sub>sr</sub>
+                               V<sub>bw</sub = max(H<sub>w</sub>)
+
+| dimension | V<sub>sl</sub>       | V<sub>yw</sub>  | V<sub>ys</sub> | V<sub>bw</sub> | V<sub>sr</sub> |
+|-----------|----------------------|-----------------|----------------|----------------|----------------|
+| source    | style                | auto from style | style          | data           | style          |
+| values    | fraction<sup>*</sup> | fraction        | fraction       | absolute       | fraction       |
+
+\* fraction of V<sub>bw</sub>
+
+**Vertical track group height** V<sub>h</sub> = V<sub>st</sub> + V<sub>bh</sub> + V<sub>xst</sub> + V<sub>xh</sub> + V<sub>sb</sub>
+                                V<sub>bh</sub> = sum(H<sub>hi</sub>) + (N-1)* V<sub>his</sub>
+
+| dimension | V<sub>st</sub> | H<sub>hi</sub> | V<sub>his</sub> | V<sub>xst</sub> | V<sub>xh</sub>  | V<sub>sb</sub> |
+|-----------|----------------|----------------|-----------------|-----------------|-----------------|----------------|
+| source    | style          | data           | style           | style           | auto from style | style          |
+| values    | absolute       | absolute       | absolute        | absolute        | absolute        | absolute       |
+
+
+**Subplot width** S<sub>w</sub> = S<sub>sl</sub> + S<sub>vlw</sub> + S<sub>vls</sub> + S<sub>cw</sub> + S<sub>cs</sub> + S<sub>hlw</sub> + S<sub>hls</sub> + S<sub>ylw</sub> + S<sub>ys</sub> + S<sub>bw</sub> + S<sub>lsl</sub> + S<sub>lw</sub> + S<sub>sr</sub>
+                  S<sub>bw</sub = max(V<sub>w</sub>)
+
+| dimension | S<sub>sl</sub>       | S<sub>vlw</sub> | S<sub>vls</sub> | S<sub>cw</sub> | S<sub>cs</sub> | S<sub>hlw</sub> | S<sub>hls</sub> | S<sub>ylw</sub> | S<sub>ys</sub> | S<sub>bw</sub> | S<sub>lsl</sub> | S<sub>lw</sub> | S<sub>sr</sub> |
+|-----------|----------------------|-----------------|-----------------|----------------|----------------|-----------------|-----------------|-----------------|----------------|----------------|-----------------|----------------|----------------|
+| source    | style                | auto            | style           | style          | style          | auto            | style           | auto from style | style          | data           | style           | data           | style          |
+| values    | fraction<sup>*</sup> | NA              | fraction        | fraction       | fraction       | NA              | fraction        | fraction        | fraction       | absolute       | fraction        | fraction       | fraction       |
+
+\* fraction of S<sub>bw</sub>
+
+**Subplot height** V<sub>h</sub> = S<sub>bh</sub> + V<sub>xst</sub> + V<sub>xh</sub> + V<sub>sb</sub>
+                   V<sub>bh</sub> = sum(V<sub>hi</sub>) + (N-1)* S<sub>vs</sub>
+
+| dimension | V<sub>hi</sub> | S<sub>vs</sub> | S<sub>his</sub> | S<sub>xst</sub> | S<sub>xh</sub>  | S<sub>sb</sub> |
+|-----------|----------------|----------------|-----------------|-----------------|-----------------|----------------|
+| source    | data           | style          | style           | style           | auto from style | style          |
+| values    | absolute       | absolute       | absolute        | absolute        | absolute        | absolute       |

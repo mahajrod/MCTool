@@ -25,9 +25,9 @@
      showgrid="true"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:zoom="0.5"
-     inkscape:cx="-942"
-     inkscape:cy="364"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="336.58283"
+     inkscape:cy="163.69522"
      inkscape:window-width="1920"
      inkscape:window-height="1020"
      inkscape:window-x="1920"
@@ -44,26 +44,6 @@
        id="grid6967"
        originx="-3.6721096"
        originy="-5.2915675" />
-    <sodipodi:guide
-       position="56.494936,62.735014"
-       orientation="1,0"
-       id="guide42351" />
-    <sodipodi:guide
-       position="58.102722,62.501104"
-       orientation="1,0"
-       id="guide42353" />
-    <sodipodi:guide
-       position="57.269593,48.030965"
-       orientation="0,-1"
-       id="guide42382" />
-    <sodipodi:guide
-       position="57.178972,49.346432"
-       orientation="0,-1"
-       id="guide42384" />
-    <sodipodi:guide
-       position="57.269591,48.030965"
-       orientation="1,0"
-       id="guide44053" />
     <sodipodi:guide
        position="102.95497,-16.007624"
        orientation="0,-1"
@@ -6131,6 +6111,22 @@
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="28.942793"
+       y="110.74884"
+       id="text84877-4-9-1-6"
+       inkscape:export-filename="/home/mahajrod/Dropbox/MACE/documentation/drawing/figure_scheme.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300"><tspan
+         sodipodi:role="line"
+         id="tspan84875-8-3-9-5"
+         style="font-size:2.11667px;stroke-width:0.264583"
+         x="28.942793"
+         y="110.74884">V<tspan
+   style="font-size:65%;baseline-shift:sub"
+   id="tspan287102-4">bh</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
        x="40.384228"
        y="97.424568"
        id="text84877-4-9-1-9"
@@ -6157,9 +6153,9 @@
          id="tspan84875-8-3-9-8-8-0-0-2-7-0"
          style="font-size:2.11667px;stroke-width:0.264583"
          x="71.900406"
-         y="93.304565">H<tspan
+         y="93.304565">V<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan364210-5-2">w</tspan></tspan></text>
+   id="tspan364210-5-2">bw</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -6191,7 +6187,7 @@
          x="80.782433"
          y="6.8764458">S<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan364210-5-6-9">vw</tspan></tspan></text>
+   id="tspan364210-5-6-9">bw</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -6333,9 +6329,9 @@
          style="font-size:2.11667px;stroke-width:0.264583"
          x="3.7490497"
          y="31.812098"
-         sodipodi:role="line">S<tspan
+         sodipodi:role="line">V<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan184432">vh1</tspan></tspan></text>
+   id="tspan184432">h1</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -6349,9 +6345,9 @@
          style="font-size:2.11667px;stroke-width:0.264583"
          x="3.5325837"
          y="64.982468"
-         sodipodi:role="line">S<tspan
+         sodipodi:role="line">V<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan184432-1">vh2</tspan></tspan></text>
+   id="tspan184432-1">h2</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -7230,7 +7226,7 @@
          x="72.316719"
          y="136.13844">H<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan364210-5-4-8">w</tspan></tspan></text>
+   id="tspan364210-5-4-8">bw</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -8168,5 +8164,26 @@
          y="167.98837">T<tspan
    style="font-size:65%;baseline-shift:sub"
    id="tspan287102-8-4-8-9">ys</tspan></tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.05;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 38.1,99.747913 H 31.750001"
+       id="path109654"
+       inkscape:export-filename="/home/mahajrod/Dropbox/MACE/documentation/drawing/figure_scheme.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.05;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 38.364583,120.65 H 31.750001"
+       id="path109656"
+       inkscape:export-filename="/home/mahajrod/Dropbox/MACE/documentation/drawing/figure_scheme.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.05;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker65594);marker-end:url(#marker60012)"
+       d="M 33.072917,120.38542 V 99.747915"
+       id="path109771"
+       inkscape:export-filename="/home/mahajrod/Dropbox/MACE/documentation/drawing/figure_scheme.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
   </g>
 </svg>
