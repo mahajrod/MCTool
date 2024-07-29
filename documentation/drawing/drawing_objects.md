@@ -83,7 +83,7 @@
       2. T<sub>yw</sub>   - width of the track's Y axis (including ticks and label)
       3. T<sub>ys</sub>   - space between track's Y axis and track body
       4. T<sub>bw</sub>    - width of the track body
-      5. T<sub>sb</sub>    - right space
+      5. T<sub>sr</sub>    - right space
    2. Vertical dimensions
       1. T<sub>st</sub>   - top space
       2. T<sub>lh</sub>   - height of the track label
@@ -102,7 +102,7 @@
 | source    | style                | auto from style | style            | data           | style          |
 | values    | fraction<sup>*</sup> | fraction        | fraction         | absolute       | fraction       |
 
-\* fraction of max T<sub>bw</sub>
+\* fraction of max (T<sub>bw</sub>)
 
 *Track height* T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</sub> + T<sub>xst</sub>  + T<sub>xh</sub> + T<sub>sb</sub>
 
@@ -110,4 +110,21 @@
 |-----------|----------------|------------------|-----------------|----------------|-----------------|-----------------|----------------|
 | source    | style          | auto from style  | style           | data           | style           | auto from style | style          |
 | values    | absolute       | absolute         | absolute        | absolute       | absolute        | absolute        | absolute       |
+
+
+*Horizontal track group width* H<sub>w</sub> = H<sub>sl</sub> + H<sub>yw</sub> + H<sub>ys</sub> + sum(T<sub>wi</sub>) + (N-1)* H<sub>sti</sub> + H<sub>sr</sub>
+
+| dimension | H<sub>sl</sub>       | H<sub>yw</sub>  | H<sub>ys</sub> | T<sub>wi</sub> | H<sub>sti</sub> | H<sub>sr</sub> |
+|-----------|----------------------|-----------------|----------------|----------------|-----------------|----------------|
+| source    | style                | auto from style | style          | data           | style           | style          |
+| values    | fraction<sup>*</sup> | fraction        | fraction       | absolute       | fraction        | fraction       |
+
+\* fraction max(sum(T<sub>bw</sub>) per horizontal track group) 
+
+*Horizontal track group height* H<sub>h</sub> = H<sub>st</sub> + H<sub>ht</sub> + H<sub>xst</sub> + H<sub>xh</sub> + H<sub>sb</sub>
+
+| dimension | H<sub>st</sub> | H<sub>ht</sub>     | H<sub>xst</sub> | H<sub>xh</sub>  | H<sub>sb</sub> |
+|-----------|----------------|--------------------|-----------------|-----------------|----------------|
+| source    | style          | max(T<sub>h</sub>) | style           | auto from style | style          |
+| values    | absolute       | absolute           | absolute        | absolute        | absolute       |
 
