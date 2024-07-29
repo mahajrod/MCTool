@@ -118,7 +118,7 @@ T<sub>h</sub> = T<sub>st</sub> + T<sub>lh</sub> + T<sub>lsb</sub> + T<sub>bh</su
 ## Horizontal track group width
 H<sub>w</sub> = H<sub>sl</sub> + H<sub>yw</sub> + H<sub>ys</sub> + H<sub>bw</sub> + H<sub>sr</sub>
                                  
-H<sub>bw</sub = sum(T<sub>wi</sub>) + (N-1)* H<sub>sti</sub>
+H<sub>bw</sub> = sum(T<sub>wi</sub>) + (N-1)* H<sub>sti</sub>
 
 | dimension | H<sub>sl</sub>       | H<sub>yw</sub>  | H<sub>ys</sub> | T<sub>wi</sub> | H<sub>sti</sub> | H<sub>sr</sub> |
 |-----------|----------------------|-----------------|----------------|----------------|-----------------|----------------|
@@ -139,7 +139,7 @@ H<sub>h</sub> = H<sub>st</sub> + H<sub>ht</sub> + H<sub>xst</sub> + H<sub>xh</su
 ## Vertical track group width
 V<sub>w</sub> = V<sub>sl</sub> + V<sub>yw</sub> + V<sub>ys</sub> + V<sub>bw</sub> + V<sub>sr</sub>
                                
-V<sub>bw</sub = max(H<sub>w</sub>)
+V<sub>bw</sub> = max(H<sub>w</sub>)
 
 | dimension | V<sub>sl</sub>       | V<sub>yw</sub>  | V<sub>ys</sub> | V<sub>bw</sub> | V<sub>sr</sub> |
 |-----------|----------------------|-----------------|----------------|----------------|----------------|
@@ -162,7 +162,7 @@ V<sub>bh</sub> = sum(H<sub>hi</sub>) + (N-1)* V<sub>his</sub>
 ## Subplot width
 S<sub>w</sub> = S<sub>sl</sub> + S<sub>vlw</sub> + S<sub>vls</sub> + S<sub>cw</sub> + S<sub>cs</sub> + S<sub>hlw</sub> + S<sub>hls</sub> + S<sub>ylw</sub> + S<sub>ys</sub> + S<sub>bw</sub> + S<sub>lsl</sub> + S<sub>lw</sub> + S<sub>sr</sub>
 
-S<sub>bw</sub = max(V<sub>w</sub>)
+S<sub>bw</sub> = max(V<sub>w</sub>)
 
 | dimension | S<sub>sl</sub>       | S<sub>vlw</sub> | S<sub>vls</sub> | S<sub>cw</sub> | S<sub>cs</sub> | S<sub>hlw</sub> | S<sub>hls</sub> | S<sub>ylw</sub> | S<sub>ys</sub> | S<sub>bw</sub> | S<sub>lsl</sub> | S<sub>lw</sub> | S<sub>sr</sub> |
 |-----------|----------------------|-----------------|-----------------|----------------|----------------|-----------------|-----------------|-----------------|----------------|----------------|-----------------|----------------|----------------|
