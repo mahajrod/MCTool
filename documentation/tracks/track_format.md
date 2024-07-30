@@ -30,15 +30,15 @@ See **Allowed types of the tracks** for tracks supporting such settings.
 
 In some cases you may need to draw one track (query) over other one (target).
 For this just add **@target_track_name** to the query track after the type.
-If you wish to attach several query tracks to a single target track, then you will need  specify a query-target chain for each of queries in the order of drawing.  
+If you wish to attach several query tracks to a single target track, then you will need  specify a zorder to set the order of drawing of the attached tracks 
 
 *Example.* Two marker_m query tracks attached to the hist track. Query track with rectangle markers will be drawn last:
 
 AAAAA<strong>&</strong>hist - target
 
-BBBBB<strong>&</strong>marker_m<strong>@</strong>AAAAA - query attached to the target AAAAA
+BBBBB<strong>&</strong>marker<strong>$</strong>zorder=1<strong>@</strong>AAAAA - query attached to the target AAAAA
 
-CCCCC<strong>&</strong>marker_m<strong>@</strong>BBBBB - query2 attached to the same target AAAAA, but will be drawn after query 1
+CCCCC<strong>&</strong>marker<strong>$</strong>zorder=2<strong>@</strong>AAAAA - query2 attached to the same target AAAAA, but will be drawn after query 1 as zorder is higher
 
 **Allowed types of the tracks:**
 1. **hist**          - use a full height of a track to plot a stacked histogram. Sum of components must not exceed 1.00 in any window. Use a script "prepare_hist_for_tracks.py" to prepare your values for the track.

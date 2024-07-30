@@ -91,15 +91,15 @@
       3. T<sub>lsb</sub>  - space between track label and track body
       4. T<sub>bh</sub>    - height of the  track body
       5. T<sub>xst</sub>  - space between track bodies and track's X axis 
-      6. T<sub>xh</sub>   - height of the tracks' sX axis (including ticks and label)
+      6. T<sub>xh</sub>   - height of the track's X axis (including ticks and label)
       7. T<sub>sb</sub>   - bottom space
 
 # Formulas:
 
 ## Track width
-T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> +  T<sub>sb</sub>
+T<sub>w</sub> = T<sub>sl</sub> + T<sub>yw</sub> + T<sub>ys</sub> + T<sub>bw</sub> + T<sub>sr</sub>
 
-| dimension | T<sub>sl</sub>       | T<sub>yw</sub>  | T<sub>ys</sub>   | T<sub>bw</sub> | T<sub>sb</sub> |
+| dimension | T<sub>sl</sub>       | T<sub>yw</sub>  | T<sub>ys</sub>   | T<sub>bw</sub> | T<sub>sr</sub> |
 |-----------|----------------------|-----------------|------------------|----------------|----------------|
 | source    | style                | auto from style | style            | data           | style          |
 | values    | fraction<sup>*</sup> | fraction        | fraction         | absolute       | fraction       |
@@ -148,7 +148,7 @@ V<sub>bw</sub> = max(H<sub>w</sub>)
 
 \* fraction of V<sub>bw</sub>
 
-## Vertical track group height*
+## Vertical track group height
 V<sub>h</sub> = V<sub>st</sub> + V<sub>bh</sub> + V<sub>xst</sub> + V<sub>xh</sub> + V<sub>sb</sub>
                                 
 V<sub>bh</sub> = sum(H<sub>hi</sub>) + (N-1)* V<sub>his</sub>
