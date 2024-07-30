@@ -37,8 +37,9 @@ class DataDF(pd.DataFrame):
                  "track_type_dict", "track_parameter_dict", "track_attachment_dict", "track_metadata_df", "parsed",
                  "attached_track_dict", "attachment_relation_dict", "track_feature_dict"]
 
-    def __init__(self, data=None, index=None, columns=None, dtype=None, copy=True, empty=False, parsed=False,
-                 default_tracktype=None,
+    def __init__(self, data=None, index=None, columns=None, dtype=None, copy=True,
+                 syn_df=None, whitelist_series=None, blacklist_series=None,
+                 empty=False, parsed=False, default_tracktype=None,
                  parameter_separator="&", subtype_separator="$", attachment_separator="@"):
         
         pd.DataFrame.__init__(self, data=data, index=index, columns=columns, dtype=dtype, copy=copy,)
@@ -79,10 +80,19 @@ class DataDF(pd.DataFrame):
         self.track_parameter_dict = {}
         self.track_attachment_dict = {}
         self.track_metadata_df = None
-        self.parsed = False
+        self.parsed = parsed
         self.attached_track_dict = {}
         self.attachment_relation_dict = {}
         self.track_feature_dict = {}
+
+        if (whitelist_series is not None) or (blacklist_series is not None):
+            print("AAAAAA")
+            self.filter_scaffolds(whitelist_series=whitelist_series,
+                                  blacklist_series=blacklist_series,
+                                  inplace=True)
+
+        if (syn_df is not None) and (not syn_df.empty):
+            self.rename_scaffolds(self, syn_df)
 
     @property
     def _constructor(self):
@@ -337,6 +347,62 @@ class DataDF(pd.DataFrame):
     def check_na(value):
         na_check = pd.isnull(value)
         return sum(na_check) if isinstance(na_check, Iterable) else na_check
+
+    @staticmethod
+    def get_filtered_entry_list(entry_list,
+                                entry_black_list=None,
+                                sort_entries=False,
+                                entry_ordered_list=None,
+                                entry_white_list=None,
+                                invert_match=False):
+        white_set = set(entry_white_list) if entry_white_list is not None else set()
+        black_set = set(entry_black_list) if entry_black_list is not None else set()
+        entry_set = set(entry_list)
+
+        if white_set:
+            filtered_entry_set = entry_set & white_set
+        if black_set:
+            filtered_entry_set = entry_set - black_set
+        if (not white_set) and (not black_set):
+            filtered_entry_set = set()
+
+        if invert_match:
+            filtered_entry_set = entry_set - filtered_entry_set
+            return list(filtered_entry_set)
+        else:
+            filtered_entry_list = list(filtered_entry_set)
+            if sort_entries:
+                filtered_entry_list.sort()
+
+            final_entry_list = []
+
+            if entry_ordered_list:
+                for entry in entry_ordered_list:
+                    if entry in filtered_entry_list:
+                        final_entry_list.append(entry)
+                        filtered_entry_list.remove(entry)
+                    else:
+                        print("WARNING!!!Entry(%s) from order list is absent in list of entries!" % entry)
+                return final_entry_list + filtered_entry_list
+            else:
+                return filtered_entry_list
+
+    def filter_scaffolds(self, whitelist_series=None, blacklist_series=None, inplace=False):
+        if inplace:
+            filtered_scaffolds = self.get_filtered_entry_list(self.index,
+                                                              entry_black_list=blacklist_series,
+                                                              entry_white_list=whitelist_series,
+                                                              invert_match=True)
+            self.drop(filtered_scaffolds, inplace=True)
+        else:
+            filtered_scaffolds = self.get_filtered_entry_list(self.index,
+                                                              entry_black_list=blacklist_series,
+                                                              entry_white_list=whitelist_series,
+                                                              invert_match=False)
+            return self.loc[self.index.isin(filtered_scaffolds)]
+
+    def rename_scaffolds(self, syn_df, syn_column="syn"):
+        self.rename(index=syn_df[syn_column].to_dict(), inplace=True)
 
     def parse_data(self):
         column_names = list(self.columns)
