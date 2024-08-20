@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", action="store", dest="input", required=True,
                     help="Input file with selected features")
 parser.add_argument("-t", "--input_type", action="store", dest="input_type", default="str",
-                    help="Type of input file. Allowed: str (default), gff, tab6, tab6_colored, bed, bedgraph")
+                    help="Type of input file. Allowed: str (default), gff, tab6, tab6_colored, bed, bedgraph, bed_table")
 parser.add_argument("-r", "--header", action="store_true", dest="header", default=None,
                     help="Header is present in input file. Default: False")
 parser.add_argument("-g", "--legend", action="store", dest="legend",
@@ -187,6 +187,11 @@ try:
     elif args.input_type == "bed":
         feature_df = CollectionBED(in_file=args.input, parsing_mode="coordinates_only", format="bed")
 
+        feature_start_column_id = "start"
+        feature_end_column_id = "end"
+
+    elif args.input_type == "bed_table":
+        feature_df = CollectionBED(in_file=args.input, parsing_mode="complete", format="bed", header_in_file=False)
         feature_start_column_id = "start"
         feature_end_column_id = "end"
 

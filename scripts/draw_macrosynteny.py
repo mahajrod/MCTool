@@ -29,6 +29,8 @@ def split_comma_separated_list(string):
 
 
 def rgb_tuple_to_hex(rgb_tuple):
+    if isinstance(rgb_tuple, str):
+        return rgb_tuple
     color_code = "#"
     for i in [0, 1, 2]:
         color_code += "{:02X}".format(int(255 * rgb_tuple[i]))
@@ -128,6 +130,14 @@ parser.add_argument("--genome_labellist", action="store", dest="genome_labellist
 parser.add_argument("--genome_config", action="store", dest="genome_config", default=None,
                     help="Optional configuration file. If set orderlists and invertlists from genome folders will be ignored")
 
+parser.add_argument("--strand_switch_label", action="store", dest="strand_switch_label", default="*",
+                    help="Symbol to be used in the genome config as a strand switch label. "
+                         "If in scaffold id there is only one such a symbol a query strand switch will be applied to the scaffold. "
+                         "If two symbol - target strand switch, if three - both query and target strand switches, respectively. "
+                         "Default: '*', i.e use '*' - for query strand switch, '**' - for target strand switch, '***' - for both. "
+                         "Note, strand switch symbols must occupy the very last positions in the scaffold id, but BEFORE the inversion symbol. "
+                         "If you wish also to invert the scaffold, inversion symbol must be the very last symbol in the scaffold id, ")
+
 parser.add_argument("--invert_genome_order", action="store_true", dest="invert_genome_order", default=False,
                     help="Invert order of the genomes in the --genome_orderlist. Default: False")
 parser.add_argument("--syn_file_key_column", action="store", dest="syn_file_key_column",
@@ -155,7 +165,7 @@ parser.add_argument("--invert_major_strand", action="store_true", dest="invert_m
                          "If you wish to invert the major strand for the specific genome or even for a specific "
                          "chromosome, please, use genome=specific swithstrandlist file.  Default: False")
 parser.add_argument("--inverted_scaffold_label", action="store", dest="inverted_scaffold_label", default="'",
-                    help="Symbol to use for labeling inverted scaffolds. Default: '")
+                    help="Symbol to use for labeling inverted scaffolds. Must be a very last symbol in the scaffold id. Default: '")
 parser.add_argument("--inversion_color", action="store", dest="inversion_color", default="red",
                     help="Color to use to highlight inversions on the plot. Must be a color recognized by Matplotlib. Default: 'red'")
 parser.add_argument("--translocation_color", action="store", dest="translocation_color", default="blue",
@@ -257,7 +267,6 @@ syn_file_key_column, syn_file_value_column = args.syn_file_key_column, args.syn_
 
 synteny_format = args.synteny_format
 
-#inverted_scaffold_label = "'"
 
 # read files
 print(data_dir_path)
@@ -317,7 +326,8 @@ for genome in genome_orderlist:
         queryswithstrandlist_series_dict[genome] = pd.Series(dtype=str)
     else:
         try:
-            queryswithstrandlist_series_dict[genome] = pd.read_csv(get_filenames_for_extension(data_dir_path / genome, extension_list=["queryswitchstrandlist"]),
+            queryswithstrandlist_series_dict[genome] = pd.read_csv(get_filenames_for_extension(data_dir_path / genome,
+                                                                                               extension_list=["queryswitchstrandlist"]),
                                                                    sep="\t", header=None, comment="#").squeeze("columns")
         except pd.errors.EmptyDataError:
             queryswithstrandlist_series_dict[genome] = pd.Series(dtype=str)
@@ -327,7 +337,8 @@ for genome in genome_orderlist:
         targetswithstrandlist_series_dict[genome] = pd.Series(dtype=str)
     else:
         try:
-            targetswithstrandlist_series_dict[genome] = pd.read_csv(get_filenames_for_extension(data_dir_path / genome, extension_list=["targetswitchstrandlist"]),
+            targetswithstrandlist_series_dict[genome] = pd.read_csv(get_filenames_for_extension(data_dir_path / genome,
+                                                                                                extension_list=["targetswitchstrandlist"]),
                                                                     sep="\t", header=None, comment="#").squeeze("columns")
         except pd.errors.EmptyDataError:
             targetswithstrandlist_series_dict[genome] = pd.Series(dtype=str)
@@ -371,26 +382,83 @@ for genome in genome_orderlist:
             color_df_dict[genome].set_index("scaffold_id", inplace=True)
 
 # ---------------------------- Read genome config if it was set --------------------------------------
+
+
+def check_for_inversion_and_strand_switch_request(scaffold_id, strand_switch_symbol, inversion_symbol,):
+    request_dict = {"inversion": False,
+                    "query_switch_strand": False,
+                    "target_switch_strand": False}
+    processed_scaffold_id = scaffold_id
+
+    if scaffold_id[-1] == inversion_symbol:
+        request_dict["inversion"] = True
+        processed_scaffold_id = scaffold_id[:-1]
+    if processed_scaffold_id[-3:] == strand_switch_symbol * 3:
+        request_dict["query_switch_strand"] = True
+        request_dict["target_switch_strand"] = True
+        processed_scaffold_id = processed_scaffold_id[:-3]
+    elif processed_scaffold_id[-2:] == strand_switch_symbol * 2:
+        request_dict["target_switch_strand"] = True
+        processed_scaffold_id = processed_scaffold_id[:-2]
+    elif processed_scaffold_id[-1:] == strand_switch_symbol * 1:
+        request_dict["query_switch_strand"] = True
+        processed_scaffold_id = processed_scaffold_id[:-1]
+
+    if len(processed_scaffold_id) == 0:
+        raise ValueError(f"ERROR!!! No symbols were left after processing of the scaffold id {scaffold_id} !")
+
+    return processed_scaffold_id, request_dict
+
+
+def get_original_scaffold_id(syn_df, scaffold_id):
+    if scaffold_id not in list(syn_df["syn"]):
+        #print(syn_df["syn"])
+        return scaffold_id
+    return syn_df.index[list(syn_df["syn"]).index(scaffold_id)]
+
+
+genome_colors = []
+
 if args.genome_config:
     genome_config_tmp_dict = OrderedDict()
+
     with open(args.genome_config, "r") as in_fd:
         for line in in_fd:
-            line_list = line.strip().split("\t", 1)
-            genome_config_tmp_dict[line_list[0]] = list(map(lambda s: s.split(","), line_list[1].split("\t")))
+            line_list = line.strip().split("\t", 2)
+            genome_colors.append(line_list[1] if line_list[1] != "." else None) # read_colors
+            genome_config_tmp_dict[line_list[0]] = list(map(lambda s: s.split(","), line_list[2].split("\t")))
+
     for genome in genome_config_tmp_dict:
         invertlist_series_dict[genome] = []
         orderlist_series_dict[genome] = []
+        targetswithstrandlist_series_dict[genome] = []
+        queryswithstrandlist_series_dict[genome] = []
         for entry in genome_config_tmp_dict[genome]:
             #print(entry)
             for scaffold_id in entry:
                 #print(scaffold_id)
-                if scaffold_id[-1] == args.inverted_scaffold_label:
-                    invertlist_series_dict[genome].append(scaffold_id[:-1])
-                    orderlist_series_dict[genome].append(scaffold_id[:-1])
-                else:
-                    orderlist_series_dict[genome].append(scaffold_id)
-        invertlist_series_dict[genome] = pd.Series(invertlist_series_dict[genome])
-        orderlist_series_dict[genome] = pd.Series(orderlist_series_dict[genome])
+
+                processed_scaffold_id, request_dict = check_for_inversion_and_strand_switch_request(scaffold_id,
+                                                                                                    args.strand_switch_label,
+                                                                                                    args.inverted_scaffold_label)
+                #print(processed_scaffold_id, request_dict)
+                #print(get_original_scaffold_id(syn_df_dict[genome], processed_scaffold_id))
+                orderlist_series_dict[genome].append(processed_scaffold_id)
+                if request_dict["inversion"]:
+                    invertlist_series_dict[genome].append(processed_scaffold_id)
+
+                if request_dict["query_switch_strand"]:
+                    queryswithstrandlist_series_dict[genome].append(get_original_scaffold_id(syn_df_dict[genome],
+                                                                                             processed_scaffold_id))
+                if request_dict["target_switch_strand"]:
+                    targetswithstrandlist_series_dict[genome].append(get_original_scaffold_id(syn_df_dict[genome],
+                                                                                              processed_scaffold_id))
+
+        invertlist_series_dict[genome] = pd.Series(invertlist_series_dict[genome], dtype='str')
+        orderlist_series_dict[genome] = pd.Series(orderlist_series_dict[genome], dtype='str')
+        queryswithstrandlist_series_dict[genome] = pd.Series(queryswithstrandlist_series_dict[genome] , dtype='str')
+        targetswithstrandlist_series_dict[genome] = pd.Series(targetswithstrandlist_series_dict[genome], dtype='str')
+
 # -------------------------------------------------------------------------------------------------------
 #whitelist_series_dict = {genome: pd.read_csv(get_filenames_for_extension(data_dir_path / genome, extension_list=["whitelist"]),
 #                                             sep="\t", header=None, comment="#").squeeze("columns") for genome in genome_orderlist}
@@ -961,7 +1029,7 @@ for index, genome in zip(range(0, len(genome_orderlist) - 1), genome_orderlist[:
                                         inversion_format if synteny_dict[genome][type_column_name].iloc[row - 1] == "inversion" else translocation_format if synteny_dict[genome][type_column_name].iloc[row - 1] == "translocation" else default_format)
         writer.sheets[sheet_name].write(row, connector_color_column_idx, synteny_dict[genome][connector_column_name].iloc[row - 1],
                                         inversion_format if synteny_dict[genome][connector_column_name].iloc[row - 1] == args.inversion_color else translocation_format if synteny_dict[genome][connector_column_name].iloc[row - 1] == args.translocation_color else default_format)
-    workbook.worksheets()[0].autofit()
+    workbook.get_worksheet_by_name(sheet_name).autofit()
     workbook.formats[0].set_align('center')
     writer.close()
 
@@ -1035,8 +1103,18 @@ def chromosome_line_function(row, height):
 
 
 color_number = len(genome_orderlist)
+
 colors = distinctipy.get_colors(color_number)
+if genome_colors:
+    for g_color_index in range(0, len(genome_colors)):
+        if genome_colors[g_color_index] is not None:
+            colors[g_color_index] = genome_colors[g_color_index]
+
 color_list = list(map(rgb_tuple_to_hex, colors))
+color_df = pd.DataFrame.from_dict({"genome_id": genome_orderlist,
+                                   "color": color_list},)
+color_df.set_index("genome_id", inplace=True)
+color_df.to_csv(f"{args.output_prefix}.genome.colors", sep="\t", index=True, header=True)
 
 for species, index, color, species_label in zip(genome_orderlist, range(0, len(genome_orderlist)), color_list, genome_labellist): #genome_orderlist):
     #print(centromere_df_dict[species])
