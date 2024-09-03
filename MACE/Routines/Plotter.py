@@ -155,7 +155,7 @@ class Plotter:
                     showmeans=False,
                     patch_artist=True,
                     boxprops=dict(facecolor="#575757", color="#575757", linewidth=0),
-                    medianprops=dict(color="white", solid_capstyle="butt"),
+                    medianprops=dict(color="white", solid_capstyle="butt", linewidth=2),
                     whiskerprops=dict(color="#575757", linewidth=0),
                     capprops=dict(color="#575757", linewidth=0),
                 )
