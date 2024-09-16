@@ -16,6 +16,8 @@ from matplotlib.patches import Rectangle
 from RouToolPa.Collections.General import TwoLvlDict
 from RouToolPa.Routines.Drawing import DrawingRoutines
 
+from MACE.Data.DataTypes import *
+
 from MACE.Visualization.Tracks import *
 from MACE.Visualization.TrackGroups import *
 from MACE.Visualization.Subplots import *
@@ -348,7 +350,8 @@ class Visualization(DrawingRoutines):
         return None if test_colormaps else fig
 
     @staticmethod
-    def color_threshold_expression(value, thresholds, colors, background):
+    def color_threshold_expression(value, thresholds, colors, background, interval_type="left_open"):
+        # allowed_type: left_open, right_open
         # TODO: Needs at least partial implementation as ColorStyle
         """
         :param value:
@@ -366,11 +369,18 @@ class Visualization(DrawingRoutines):
         if value > thresholds[-1]:
             return colors[-1]
         for i in range(0, len(thresholds) - 1):
-            if thresholds[i] < value <= thresholds[i + 1]:
-                # print(i)
-                # print(self.style.colors)
-                # print(self.style.thresholds)
-                return colors[i]
+            if interval_type == "left_open":
+                if thresholds[i] < value <= thresholds[i + 1]:
+                    # print(i)
+                    # print(self.style.colors)
+                    # print(self.style.thresholds)
+                    return colors[i]
+            elif interval_type == "right_open":
+                if thresholds[i] <= value < thresholds[i + 1]:
+                    # print(i)
+                    # print(self.style.colors)
+                    # print(self.style.thresholds)
+                    return colors[i]
 
     @staticmethod
     def add_color_to_track_df(track_df, expression, value_column_index=-1, value_column_name=None,
@@ -385,8 +395,8 @@ class Visualization(DrawingRoutines):
         return output_df
 
     @staticmethod
-    def density_legend(colors, thresholds, colormap=None, feature_name="SNPs"):
-        return DensityLegend(colors=colors, colormap=colormap, thresholds=thresholds, feature_name=feature_name)
+    def density_legend(colors, thresholds, colormap=None, feature_name="SNPs", interval_type='left_open'):
+        return DensityLegend(colors=colors, colormap=colormap, thresholds=thresholds, feature_name=feature_name, interval_type=interval_type)
 
     @staticmethod
     def coverage_legend(colormap, thresholds):
@@ -444,7 +454,7 @@ class Visualization(DrawingRoutines):
                       subplot_title_fontsize=None,
                       subplot_title_fontweight='bold'
                       ):
-
+        #print(bed_collection_dict)
         track_group_dict = OrderedDict()
         #print(scaffold_order_list)
         scaffolds = scaffold_order_list.to_list() if isinstance(scaffold_order_list, (pd.Series, pd.Index)) else scaffold_order_list  # scaffold_order_list[::-1] if scaffold_order_list else collection_gff.records.index.get_level_values(level=0).unique().to_list()
@@ -477,7 +487,6 @@ class Visualization(DrawingRoutines):
         #feature_style = FeatureStyle(patch_type="rectangle", height=feature_height, label_fontsize=10)
         track_number = 0
         for chr in scaffolds:  # count_df.index.get_level_values(level=0).unique():
-
             highlight = False
             highlight_color = None
             if (highlight_df is not None) and (not highlight_df.empty):

@@ -456,7 +456,7 @@ if args.genome_config:
 
         invertlist_series_dict[genome] = pd.Series(invertlist_series_dict[genome], dtype='str')
         orderlist_series_dict[genome] = pd.Series(orderlist_series_dict[genome], dtype='str')
-        queryswithstrandlist_series_dict[genome] = pd.Series(queryswithstrandlist_series_dict[genome] , dtype='str')
+        queryswithstrandlist_series_dict[genome] = pd.Series(queryswithstrandlist_series_dict[genome], dtype='str')
         targetswithstrandlist_series_dict[genome] = pd.Series(targetswithstrandlist_series_dict[genome], dtype='str')
 
 # -------------------------------------------------------------------------------------------------------

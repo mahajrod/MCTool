@@ -34,14 +34,7 @@ parser.add_argument("-t", "--input_type", action="store", dest="input_type", def
                     help="Type of input. Allowed: 'vcf'(default), 'bedgraph'")
 parser.add_argument("-o", "--output_prefix", action="store", dest="output_prefix", required=True,
                     help="Prefix of output files")
-"""
-parser.add_argument("-d", "--dpi", action="store", dest="dpi", type=int, default=300,
-                    help="Dpi of figure")
 
-parser.add_argument("-f", "--size_of_figure", action="store", dest="size_of_figure", type=lambda s: s.split(","),
-                    default=(40, 40),
-                    help="Size of figure in inches. X and Y values should be separated by comma. Default: 40,40")
-"""
 parser.add_argument("-e", "--output_formats", action="store", dest="output_formats", type=lambda s: s.split(","),
                     default=("png", "svg"),
                     help="Comma-separated list of formats (supported by matlotlib) of "
@@ -133,6 +126,9 @@ parser.add_argument("--density_thresholds", action="store", dest="density_thresh
                     help="Comma-separated list of thresholds(SNPs/kb) for SNP densities to use for window coloring. "
                          "Default: values from Hapmap article"
                          "(0.0, 0.1, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5)")
+parser.add_argument("--density_thresholds_expression_type", action="store", dest="density_thresholds_expression_type",
+                    default="left_open",
+                    help="Type of the intervals used for thresholds. Allowed: 'left_open' (default), 'right_open' ")
 parser.add_argument("--test_colormaps", action="store_true", dest="test_colormaps",
                     help="Test colormaps. If set --colormap option will be ignored")
 parser.add_argument("--hide_track_label", action="store_true", dest="hide_track_label", default=False,
@@ -222,6 +218,8 @@ elif args.input_type == "bedgraph":
                                                                            "start": int,
                                                                            "end": int,
                                                                            "value": float})
+    if args.scaffold_syn_file:
+        track_df.rename(index=chr_syn_dict, inplace=True)
     track_df["value"] = track_df["value"].astype(float)
 
 if args.scaffold_syn_file:
@@ -278,7 +276,8 @@ if not args.only_count:
         color_expression = partial(Visualization.color_threshold_expression,
                                    thresholds=args.density_thresholds,
                                    colors=colors,
-                                   background="white")
+                                   background="white",
+                                   interval_type=args.density_thresholds_expression_type)
 
         track_with_colors_df = Visualization.add_color_to_track_df(track_df,
                                                                    color_expression,
@@ -294,7 +293,8 @@ if not args.only_count:
                                     args.scaffold_ordered_list,
                                     args.output_prefix,
                                     legend=Visualization.density_legend(colors, args.density_thresholds,
-                                                                        feature_name=args.feature_name),
+                                                                        feature_name=args.feature_name,
+                                                                        interval_type=args.density_thresholds_expression_type),
                                     # query_species_color_df_dict,
                                     centromere_df=centromere_df,
                                     highlight_df=args.highlight_file,
