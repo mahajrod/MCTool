@@ -69,7 +69,7 @@ class DensityLegend(Legend):
 
         square_y_pos = self.y_start - self.element_size
 
-        for color, legend_label in zip((self.masked, self.background), ("masked", "no {0}".format(self.feature_name))):
+        for color, legend_label in zip((self.masked, self.background), ("masked", "no {0}".format(self.feature_name))) if self.interval_type == "left_open" else zip((self.masked, ), ("masked", )):
             square_y_pos += self.element_size
             #print (self.x_start, square_y_pos), self.x_size, self.element_size, color
             fragment = Rectangle((self.x_start , square_y_pos), self.x_size, self.element_size,
