@@ -40,7 +40,7 @@ class DensityLegend(Legend):
     def __init__(self, y_start=0, y_end=None, x_start=0, x_end=None, x_size=10, element_size=10, style=default_legend_style,
                  colormap=None, thresholds=np.array((0.0, 0.1, 0.25, 0.5, 1.0)),
                  colors=("#333a97", "green", "yellow", "orange", "red"), background="white", feature_name="SNPs",
-                 masked="grey", fontsize=13):
+                 masked="grey", fontsize=13, interval_type='left_open'):
 
         Legend.__init__(self, y_start=y_start, y_end=y_end, x_start=x_start, x_end=x_end, x_size=x_size, element_size=element_size,
                         style=style, colormap=colormap, fontsize=fontsize)
@@ -55,6 +55,7 @@ class DensityLegend(Legend):
         self.background = background
         self.masked = masked
         self.feature_name = feature_name
+        self.interval_type = interval_type
 
     def init_coordinates(self, style=None):
         self.x_end = self.x_start + (2 + 5) * self.x_size
@@ -91,7 +92,7 @@ class DensityLegend(Legend):
 
             current_subplot.add_patch(fragment)
             if i == (len(self.thresholds) - 1):
-                legend_element_label = "> %.2f" % self.thresholds[i]
+                legend_element_label = "%s %.2f" % (">" if self.interval_type == "left_open" else "≥", self.thresholds[i])
             else:
                 legend_element_label = "%.2f - %.2f" % (self.thresholds[i], self.thresholds[i + 1])
 
