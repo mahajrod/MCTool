@@ -135,7 +135,12 @@ parser.add_argument("--density_thresholds", action="store", dest="density_thresh
 parser.add_argument("--density_thresholds_expression_type", action="store", dest="density_thresholds_expression_type",
                     default="left_open",
                     help="Type of the intervals used for thresholds. Allowed: 'left_open' (default), 'right_open' ")
-
+parser.add_argument("--skip_top_interval", action="store_true", dest="skip_top_interval", default=False,
+                    help="Skip (don't include in legend) top interval (higher than last threshold). "
+                         "In such case last threshold and above values will be included in the last interval. Default: False ")
+parser.add_argument("--skip_bottom_interval", action="store_true", dest="skip_bottom_interval", default=False,
+                    help="Skip (don't include in legend) top interval (higher than last threshold). "
+                         "In such case first threshold and below values will be included in the first interval. Default: False ")
 parser.add_argument("--test_colormaps", action="store_true", dest="test_colormaps",
                     help="Test colormaps. If set --colormap option will be ignored")
 parser.add_argument("--hide_track_label", action="store_true", dest="hide_track_label", default=False,
@@ -295,7 +300,9 @@ if not args.only_count:
                                    thresholds=args.density_thresholds,
                                    colors=colors,
                                    background="white",
-                                   interval_type=args.density_thresholds_expression_type)
+                                   interval_type=args.density_thresholds_expression_type,
+                                   skip_top_interval=args.skip_top_interval,
+                                   skip_bottom_interval=args.skip_bottom_interval)
 
         track_with_colors_df = Visualization.add_color_to_track_df(track_df,
                                                                    color_expression,
@@ -312,7 +319,9 @@ if not args.only_count:
                                     args.output_prefix,
                                     legend=Visualization.density_legend(colors, args.density_thresholds,
                                                                         feature_name=args.feature_name,
-                                                                        interval_type=args.density_thresholds_expression_type),
+                                                                        interval_type=args.density_thresholds_expression_type,
+                                                                        skip_top_interval=args.skip_top_interval,
+                                                                        skip_bottom_interval=args.skip_bottom_interval),
                                     # query_species_color_df_dict,
                                     centromere_df=centromere_df,
                                     highlight_df=args.highlight_file,

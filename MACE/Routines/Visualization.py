@@ -350,7 +350,8 @@ class Visualization(DrawingRoutines):
         return None if test_colormaps else fig
 
     @staticmethod
-    def color_threshold_expression(value, thresholds, colors, background, interval_type="left_open"):
+    def color_threshold_expression(value, thresholds, colors, background, interval_type="left_open",
+                                   skip_top_interval=False, skip_bottom_interval=False):
         # allowed_type: left_open, right_open
         # TODO: Needs at least partial implementation as ColorStyle
         """
@@ -364,23 +365,43 @@ class Visualization(DrawingRoutines):
         # thresholds=np.array((0.0, 0.1, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5)),
         # colors=("white", "#333a97", "#3d3795", "#5d3393","#813193", "#9d2d7f", "#b82861",
         #         "#d33845", "#ea2e2e", "#f5ae27")):
-        if value <= thresholds[0]:
-            return background
-        if value > thresholds[-1]:
-            return colors[-1]
-        for i in range(0, len(thresholds) - 1):
-            if interval_type == "left_open":
+        if interval_type == "left_open":
+            if value <= thresholds[0]:
+                if not skip_bottom_interval:
+                    return background
+                else:
+                    return colors[0]
+            if value > thresholds[-1]:
+                if not skip_top_interval:
+                    return colors[-1]
+                else:
+                    return colors[len(thresholds) - 2]
+            for i in range(0, len(thresholds) - 1):
                 if thresholds[i] < value <= thresholds[i + 1]:
                     # print(i)
                     # print(self.style.colors)
                     # print(self.style.thresholds)
                     return colors[i]
-            elif interval_type == "right_open":
+
+        elif interval_type == "right_open":
+            if value < thresholds[0]:
+                if not skip_bottom_interval:
+                    return background
+                else:
+                    return colors[0]
+            if value >= thresholds[-1]:
+                if not skip_top_interval:
+                    return colors[-1]
+                else:
+                    return colors[len(thresholds) - 2]
+            for i in range(0, len(thresholds) - 1):
                 if thresholds[i] <= value < thresholds[i + 1]:
                     # print(i)
                     # print(self.style.colors)
                     # print(self.style.thresholds)
                     return colors[i]
+        else:
+            raise ValueError("ERROR!!! Unrecognized interval type ({0})!".format(interval_type))
 
     @staticmethod
     def add_color_to_track_df(track_df, expression, value_column_index=-1, value_column_name=None,
@@ -395,8 +416,11 @@ class Visualization(DrawingRoutines):
         return output_df
 
     @staticmethod
-    def density_legend(colors, thresholds, colormap=None, feature_name="SNPs", interval_type='left_open'):
-        return DensityLegend(colors=colors, colormap=colormap, thresholds=thresholds, feature_name=feature_name, interval_type=interval_type)
+    def density_legend(colors, thresholds, colormap=None, feature_name="SNPs", interval_type='left_open',
+                       skip_top_interval=False, skip_bottom_interval=False):
+        return DensityLegend(colors=colors, colormap=colormap, thresholds=thresholds, feature_name=feature_name,
+                             interval_type=interval_type,
+                             skip_top_interval=skip_top_interval, skip_bottom_interval=skip_bottom_interval)
 
     @staticmethod
     def coverage_legend(colormap, thresholds):
