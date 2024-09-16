@@ -6,7 +6,7 @@ import argparse
 from functools import partial
 
 import pandas as pd
-
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from copy import deepcopy
 from RouToolPa.Collections.General import SynDict, IdList
@@ -120,6 +120,12 @@ parser.add_argument("--masking_threshold", action="store", dest="masking_thresho
                     help="Maximum gaped or masked fraction of the window. Default: 0.5")
 parser.add_argument("--colormap", action="store", dest="colormap", default='jet',
                     help="Matplotlib colormap to use for SNP densities. Default: jet")
+parser.add_argument("--custom_color_list", action="store", dest="custom_color_list", default=None,
+                    type=lambda s: s.split(","),
+                    help="Comma-separated list of colors to use instead of predefined colormap. "
+                         "Color names must be recognizable by matplotlib or a hex numbers preceded by #. "
+                         "Number of colors in list should be equal to number of the thresholds. "
+                         "If set --colormap option will be ignored. Default: not set")
 parser.add_argument("--density_thresholds", action="store", dest="density_thresholds",
                     default=(0.0, 0.1, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5),
                     type=lambda s: list(map(float, s.split(","))),
@@ -129,6 +135,7 @@ parser.add_argument("--density_thresholds", action="store", dest="density_thresh
 parser.add_argument("--density_thresholds_expression_type", action="store", dest="density_thresholds_expression_type",
                     default="left_open",
                     help="Type of the intervals used for thresholds. Allowed: 'left_open' (default), 'right_open' ")
+
 parser.add_argument("--test_colormaps", action="store_true", dest="test_colormaps",
                     help="Test colormaps. If set --colormap option will be ignored")
 parser.add_argument("--hide_track_label", action="store_true", dest="hide_track_label", default=False,
@@ -173,6 +180,11 @@ if isinstance(args.scaffold_ordered_list, list):
 else:
     if args.scaffold_ordered_list.empty:
         args.scaffold_ordered_list = args.scaffold_white_list
+
+if args.custom_color_list is not None:
+    if len(args.custom_color_list) != len(args.density_thresholds):
+        raise ValueError("ERROR!!! Custom color list is set, but the number of colors ({0}) in the list is not equal to the number of the thresholds (1)!".format(len(args.custom_color_list),
+                                                                                                                                                                  len(args.density_thresholds)))
 
 variants = CollectionVCF(args.input, parsing_mode="only_coordinates")
 
@@ -266,13 +278,19 @@ if args.coverage:
     count_df.to_csv("%s.variant_counts.with_masking.tsv" % args.output_prefix, sep='\t', header=True, index=True)
 """
 if not args.only_count:
+    if args.custom_color_list is not None:
+        cmap_list = ['custom_list']
+    else:
+        cmap_list = Visualization.colormap_list if args.test_colormaps else [args.colormap]
 
-    for colormap in (Visualization.colormap_list if args.test_colormaps else [args.colormap]):
+    for colormap in cmap_list:
         #title = (args.title + " (colormap {})".format(colormap)) if args.title else "Colormap {}".format(colormap)
-
-        cmap = plt.get_cmap(colormap, len(args.density_thresholds))
-        colors = [rgb_tuple_to_hex(cmap(i)[:3]) for i in range(0, len(args.density_thresholds))]
-
+        if colormap == "custom_list":
+            colors = args.custom_color_list
+        else:
+            cmap = plt.get_cmap(colormap, len(args.density_thresholds))
+            colors = [rgb_tuple_to_hex(cmap(i)[:3]) for i in range(0, len(args.density_thresholds))]
+        #print(colors)
         color_expression = partial(Visualization.color_threshold_expression,
                                    thresholds=args.density_thresholds,
                                    colors=colors,
