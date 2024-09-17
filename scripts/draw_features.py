@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", action="store", dest="input", required=True,
                     help="Input file with selected features")
 parser.add_argument("-t", "--input_type", action="store", dest="input_type", default="str",
-                    help="Type of input file. Allowed: str (default), gff, tab6, tab6_colored, bed, bedgraph, bed_table")
+                    help="Type of input file. Allowed: str (default), gff, tab6, tab6_colored, bed, bedgraph, bed_table, bed_track")
 parser.add_argument("-r", "--header", action="store_true", dest="header", default=None,
                     help="Header is present in input file. Default: False")
 parser.add_argument("-g", "--legend", action="store", dest="legend",
@@ -201,7 +201,14 @@ try:
         feature_df.records.index.name = "scaffold"
         feature_start_column_id = "start"
         feature_end_column_id = "end"
-
+    elif args.input_type == "bed_track":
+        feature_df = CollectionBED(in_file=args.input, parsing_mode="all", format="bed_track",)
+        print(feature_df.records)
+        feature_df.records.columns = pd.Index(["start", "end", "value", "color"])
+        feature_df.records.index.name = "scaffold"
+        feature_start_column_id = "start"
+        feature_end_column_id = "end"
+        args.color_column_name = "color"
     elif args.input_type == "tab6":
         feature_df = CollectionBLAST(in_file=args.input, parsing_mode="complete")
         feature_df.records.reset_index(level="query_id", inplace=True)
@@ -220,7 +227,7 @@ except pd.errors.EmptyDataError:
 
 legend_df = pd.read_csv(args.legend, header=None, index_col=0, sep="\t") if args.legend else None
 
-
+#print(args.scaffold_white_list)
 scaffold_to_keep = StatsVCF.get_filtered_entry_list(feature_df.records.index.get_level_values(level=0).unique().to_list(),
                                                     entry_white_list=args.scaffold_white_list)
 
@@ -251,7 +258,6 @@ print(chr_len_df)
 #print(feature_df.records.columns)
 #print(feature_df.records)
 #print(chr_len_df)
-
 Visualization.draw_features({"features": feature_df}, chr_len_df,
                             args.scaffold_ordered_list,
                             args.output_prefix,
