@@ -493,7 +493,7 @@ class Visualization(DrawingRoutines):
                                                  centromere=True if centromere_df is not None else False)
 
         feature_height = 5 if stranded_tracks else 10
-
+        #print(feature_shape)
         if feature_shape == "rectangle":
             feature_style = FeatureStyle(patch_type="rectangle", height=feature_height, label_fontsize=10,
                                          face_color=default_color)
@@ -559,6 +559,7 @@ class Visualization(DrawingRoutines):
                     middle_break=middle_break,
                     centromere_start=centromere_start,
                     centromere_end=centromere_end)
+                #print(track_group_dict[chr][species].feature_style.patch_type)
                 track_number += 1
                 # print(track_group_dict[chr][species].records)
                 #if feature_color_column_id not in records.columns:
