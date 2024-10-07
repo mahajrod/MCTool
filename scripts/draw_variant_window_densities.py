@@ -222,8 +222,8 @@ if args.input_type == "vcf":
                                                   scaffold_white_list=args.scaffold_white_list,
                                                   scaffold_syn_dict=chr_syn_dict)
     feature_df, track_df = StatsVCF.convert_variant_count_to_feature_df(count_df,
-                                                                    args.window_size,
-                                                                    args.window_step)
+                                                                        args.window_size,
+                                                                        args.window_step)
     feature_df.to_csv("{}.features.counts".format(args.output_prefix), sep="\t", header=True, index=True)
     feature_df[feature_df.columns[-1]] = feature_df[feature_df.columns[-1]] * float(args.density_multiplier) / float(args.window_size)
 
