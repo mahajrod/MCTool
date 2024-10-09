@@ -481,6 +481,7 @@ class Visualization(DrawingRoutines):
         #print(bed_collection_dict)
         track_group_dict = OrderedDict()
         #print(scaffold_order_list)
+        #print(scaffold_order_list)
         scaffolds = scaffold_order_list.to_list() if isinstance(scaffold_order_list, (pd.Series, pd.Index)) else scaffold_order_list  # scaffold_order_list[::-1] if scaffold_order_list else collection_gff.records.index.get_level_values(level=0).unique().to_list()
         scaffold_number = len(scaffolds)
 
@@ -510,6 +511,8 @@ class Visualization(DrawingRoutines):
 
         #feature_style = FeatureStyle(patch_type="rectangle", height=feature_height, label_fontsize=10)
         track_number = 0
+        #print(bed_collection_dict)
+        #print(scaffolds)
         for chr in scaffolds:  # count_df.index.get_level_values(level=0).unique():
             highlight = False
             highlight_color = None
@@ -533,8 +536,12 @@ class Visualization(DrawingRoutines):
                     #print(chr)
                     centromere_start = centromere_df.loc[chr, "start"]
                     centromere_end = centromere_df.loc[chr, "end"]
-
+            #print("DDDDD")
+            #print(list(bed_collection_dict.keys()))
+            #print("CCCCCCCCcc")
             for species in bed_collection_dict:
+                #print("AAAAa")
+                #print(species)
                 records = bed_collection_dict[species].records if hasattr(bed_collection_dict[species], "records") else bed_collection_dict[species]
 
                 # print(species)
@@ -583,6 +590,8 @@ class Visualization(DrawingRoutines):
         #print((scaffold_number, figure_height_per_scaffold, figure_header_height))
         plt.figure(1, figsize=(figure_width,
                                max(1, int(track_number * figure_height_per_scaffold + figure_header_height))), dpi=dpi)
+        #print(track_number)
+        #print(max(1, int(track_number * figure_height_per_scaffold + figure_header_height)))
 
         chromosome_subplot.draw()
         plt.subplots_adjust(left=subplots_adjust_left, right=subplots_adjust_right,

@@ -147,15 +147,19 @@ chr_syn_dict = SynDict(filename=args.scaffold_syn_file,
                        key_index=args.syn_file_key_column,
                        value_index=args.syn_file_value_column)
 
+#print(args.scaffold_ordered_list)
 if isinstance(args.scaffold_ordered_list, list):
     if not args.scaffold_ordered_list:
         args.scaffold_ordered_list = deepcopy(args.scaffold_white_list)
         args.scaffold_ordered_list.replace(chr_syn_dict, inplace=True)
 else:
+    #print("AAAA")
     if args.scaffold_ordered_list.empty:
         args.scaffold_ordered_list = deepcopy(args.scaffold_white_list)
         args.scaffold_ordered_list.replace(chr_syn_dict, inplace=True)
 
+#print("BBBBBBBb")
+#print(args.scaffold_ordered_list)
 args.scaffold_ordered_list = args.scaffold_ordered_list[::-1]
 
 if args.centromere_bed:
@@ -228,16 +232,23 @@ except pd.errors.EmptyDataError:
 legend_df = pd.read_csv(args.legend, header=None, index_col=0, sep="\t") if args.legend else None
 
 #print(args.scaffold_white_list)
+#print(feature_df.records)
 scaffold_to_keep = StatsVCF.get_filtered_entry_list(feature_df.records.index.get_level_values(level=0).unique().to_list(),
                                                     entry_white_list=args.scaffold_white_list)
-
+#print(scaffold_to_keep)
 #print(scaffold_to_keep)
 # remove redundant scaffolds
 #print(args.scaffold_white_list)
 #print(feature_df.records)
 #print(scaffold_to_keep)
 feature_df.records = feature_df.records[feature_df.records.index.isin(scaffold_to_keep)]
-args.scaffold_ordered_list = args.scaffold_ordered_list[args.scaffold_ordered_list.isin(pd.Series(args.scaffold_white_list).replace(chr_syn_dict))]
+#print("BBBBBBbb")
+#print(args.scaffold_white_list)
+#print(args.scaffold_ordered_list)
+if not args.scaffold_white_list.empty:
+    args.scaffold_ordered_list = args.scaffold_ordered_list[args.scaffold_ordered_list.isin(pd.Series(args.scaffold_white_list).replace(chr_syn_dict))]
+#print("CCCC")
+#print(args.scaffold_ordered_list)
 #print(scaffold_to_keep)
 #print(pd.Series(scaffold_to_keep).replace(chr_syn_dict))
 chr_len_df = pd.read_csv(args.scaffold_length_file, sep='\t', header=None, names=("scaffold", "length"), index_col=0)
@@ -254,10 +265,12 @@ if args.verbose:
     print(feature_df.records)
 
 
-print(chr_len_df)
+#print(chr_len_df)
+#print({"features": feature_df})
 #print(feature_df.records.columns)
 #print(feature_df.records)
 #print(chr_len_df)
+#print(args.scaffold_ordered_list)
 Visualization.draw_features({"features": feature_df}, chr_len_df,
                             args.scaffold_ordered_list,
                             args.output_prefix,
