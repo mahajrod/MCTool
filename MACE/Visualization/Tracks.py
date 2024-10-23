@@ -14,7 +14,7 @@ from matplotlib.lines import Line2D
 
 class Track:
 
-    def __init__(self, records, style, y_start=None, x_start=0, x_end=None, label=None,
+    def __init__(self, records, style, type=None, y_start=None, x_start=0, x_end=None, label=None,
                  feature_style=default_feature_style, color_expression=None, colormap=None, thresholds=None,
                  colors=None, background=None, masked=None, patch_function=None,
                  forward_patch_function=None, reverse_patch_function=None, subplot_scale=False,
@@ -26,6 +26,8 @@ class Track:
 
         self.style = style
         self.feature_style = feature_style
+
+        self.type = type
 
         self.y_start = y_start
         self.y_end = None
@@ -642,7 +644,7 @@ class Track:
 
 class WindowTrack(Track):
 
-    def __init__(self, windows_df, window_size, window_step, y_start=None, x_start=0, x_end=None,
+    def __init__(self, windows_df, window_size, window_step, type=None, y_start=None, x_start=0, x_end=None,
                  style=default_track_style, label=None, norm=False,
                  window_type="stacking", multiplier=None, feature_style=default_feature_style, color_expression=None,
                  colormap=None, thresholds=None,
@@ -675,7 +677,7 @@ class WindowTrack(Track):
         :param masked:
         """
 
-        Track.__init__(self, windows_df, style, y_start=y_start, x_start=x_start, x_end=x_end, label=label,
+        Track.__init__(self, windows_df, style, type=type, y_start=y_start, x_start=x_start, x_end=x_end, label=label,
                        feature_style=feature_style, color_expression=color_expression,
                        colormap=colormap, thresholds=thresholds, colors=colors, background=background, masked=masked,
                        subplot_scale=subplot_scale, track_group_scale=track_group_scale,
@@ -754,7 +756,7 @@ class WindowTrack(Track):
 
 class FeatureTrack(Track):
 
-    def __init__(self, feature_df, y_start=None, x_start=0, x_end=None,
+    def __init__(self, feature_df, type=None, y_start=None, x_start=0, x_end=None,
                  style=default_track_style, label=None,
                  feature_style=default_feature_style, color_expression=None,
                  colormap=None, thresholds=None,
@@ -778,7 +780,7 @@ class FeatureTrack(Track):
                  figure_x_y_ratio=None, subplot_x_y_ratio=None, track_group_x_y_ratio=None,
                  centromere_start=None, centromere_end=None):
 
-        Track.__init__(self, feature_df, style, y_start=y_start, x_start=x_start, x_end=x_end, label=label,
+        Track.__init__(self, feature_df, style, type=type, y_start=y_start, x_start=x_start, x_end=x_end, label=label,
                        feature_style=feature_style, color_expression=color_expression,
                        colormap=colormap, thresholds=thresholds, colors=colors, background=background, masked=masked,
                        subplot_scale=subplot_scale,
@@ -814,7 +816,8 @@ class FeatureTrack(Track):
             return 0
 
         stranded_feature = stranded if stranded is not None else self.stranded
-
+        #print("AAAAa")
+        #print(feature_style.patch_type)
         if feature_style.patch_type == "rectangle":
             if self.feature_color_column_id in self.records.columns:
                 if stranded_feature:
@@ -924,7 +927,7 @@ class FeatureTrack(Track):
                 return create_patch, None
 
         elif feature_style.patch_type == "ellipse":
-
+            #print("BBBBB")
             if self.subplot_scale:
                 x_scale_factor = self.subplot_x_y_ratio / self.figure_x_y_ratio
             elif self.track_group_scale:

@@ -10,6 +10,7 @@ plt.ioff()
 class ChromosomePolygon(Polygon):
     def __init__(self, x_start: float, y_start: float, length: float, height: float,
                  stranded: bool = False, rounded: bool = False,
+                 stranded_end: bool = False,
                  centromere_start: (None, float) = None, centromere_end: (None, float) = None,
                  show_centromere: (None, bool) = None,
                  arc_point_number: int = 100, x_scale_factor: float = 1,
@@ -40,6 +41,7 @@ class ChromosomePolygon(Polygon):
         
         self.stranded = stranded
         self.rounded = rounded
+        self.stranded_end = stranded_end
         self.show_centromere = show_centromere
 
         self.x_scale_factor = x_scale_factor
@@ -90,7 +92,9 @@ class ChromosomePolygon(Polygon):
         self.right_centromere_overlap = None
         self.show_centromere = show_centromere
 
-        self.point_array = self.init_point_array()
+        self.masking_point_array_dict = {}
+        self.masking_point_array = []
+        self.init_point_array()
         
         Polygon.__init__(self, self.point_array, edgecolor=edgecolor, linewidth=linewidth, facecolor=facecolor,
                          fill=fill, alpha=alpha, zorder=zorder)
@@ -381,7 +385,6 @@ class LinearChromosome(ChromosomePolygon):
                 self.masking_point_array_dict["top_centromere"] = np.concatenate(top_middle_point_list)
                 self.masking_point_array_dict["bottom_centromere"] = np.concatenate(bottom_middle_point_list)
 
-        point_array = np.concatenate(
-            left_point_list + top_middle_point_list + right_point_list + bottom_middle_point_list)
+        self.point_array = np.concatenate(left_point_list + top_middle_point_list + right_point_list + bottom_middle_point_list)
         
-        return point_array
+        return self.point_array, self.masking_point_array_dict

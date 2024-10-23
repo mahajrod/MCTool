@@ -476,7 +476,8 @@ class Visualization(DrawingRoutines):
                       xmax_multiplier=1.1, ymax_multiplier=1.1,
                       xtick_fontsize=None,
                       subplot_title_fontsize=None,
-                      subplot_title_fontweight='bold'
+                      subplot_title_fontweight='bold',
+                      axes=None,
                       ):
         #print(bed_collection_dict)
         track_group_dict = OrderedDict()
@@ -593,7 +594,7 @@ class Visualization(DrawingRoutines):
         #print(track_number)
         #print(max(1, int(track_number * figure_height_per_scaffold + figure_header_height)))
 
-        chromosome_subplot.draw()
+        chromosome_subplot.draw(axes=axes)
         plt.subplots_adjust(left=subplots_adjust_left, right=subplots_adjust_right,
                             top=subplots_adjust_top, bottom=subplots_adjust_bottom)
 

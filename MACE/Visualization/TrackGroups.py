@@ -73,7 +73,7 @@ class TrackGroup(OrderedDict):
         self.init_coordinates()
 
         used_style = style if style else self.style
-        current_subplot = axes if axes else plt.gca()
+        current_subplot = axes if axes is not None else plt.gca()
 
         if self.highlight and (used_style.highlight_color is not None):
             highlight_patch = Polygon(np.array([[self.x_start, self.y_start],
