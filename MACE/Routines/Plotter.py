@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 __author__ = "tomarovsky"
 
+import os
 import re
+from copy import deepcopy
+from functools import partial
 from pathlib import Path
 
 import distinctipy
@@ -11,11 +14,62 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.legend_handler import HandlerPatch
 from matplotlib.patches import Rectangle
+from RouToolPa.Collections.General import SynDict
+from RouToolPa.Parsers.BED import CollectionBED
+from RouToolPa.Parsers.BLAST import CollectionBLAST
+from RouToolPa.Parsers.GFF import CollectionGFF
+from RouToolPa.Parsers.STR import CollectionSTR
+from RouToolPa.Parsers.VCF import CollectionVCF
+
+from MACE.Routines import StatsVCF, Visualization
+
+# TODO: add PCA plot from PRINK
 
 
 class Plotter:
     def __init__(self):
         pass
+
+    def set_paperticks_style(self, font_scale):
+        """
+        Configures a "ticks" style and "paper" context.
+        """
+        custom_params = {
+            "axes.spines.right": False,
+            "axes.spines.top": False,
+            "axes.grid": True,
+            "axes.axisbelow": True,
+            "grid.color": "#dfdfdf",
+            "grid.linestyle": "--",
+        }
+        sns.set_theme(style="ticks", rc=custom_params)
+        sns.set_context("paper", font_scale=font_scale)
+
+    def set_figure_fontsize(self, font_scale):
+        """
+        plt.rcParams.update({'font.size': font_scale})
+        """
+        plt.rcParams.update({"font.size": font_scale})
+
+    def sign_subplot(self, ax, sign, offset=(-0.1, 1.1), fontsize=12, fontweight="bold", color="black"):
+        """
+        Add a sign to a specific subplot (Axes) in a figure.
+
+        Parameters:
+        - ax : matplotlib.axes.Axes
+            The specific subplot (Axes) to label.
+        - sign : str
+            The sign to add (e.g., "A", "B", etc.).
+        - offset : tuple of float, optional
+            The x and y offsets for the label relative to the subplot in Axes coordinates.
+        - fontsize : int, optional
+            Font size for the label.
+        - fontweight : str or int, optional
+            Font weight for the label (e.g., "bold", "normal", or a numeric value).
+        - color : str, optional
+            The color used for the sign. Defaults to "black".
+        """
+        ax.text(offset[0], offset[1], sign, transform=ax.transAxes, fontsize=fontsize, fontweight=fontweight, color=color, va="center", ha="center")
 
     def scaled_histogram_with_extended_bins(self, df, bins, scale=0.45):
         hist, bin_edges = np.histogram(df, bins=bins, density=True)
@@ -88,16 +142,17 @@ class Plotter:
     def process_variant_counts(self, file_paths, removed_chrX=None, reference=None, window_size=1, multiplicator=1):
         data_list = []
         for count in file_paths:
+            df = pd.read_csv(count, sep="\t")
             file_path = Path(count)
             file_name = file_path.stem
             id = file_name.split(".")[0]
-            df = pd.read_csv(count, sep="\t")
 
             if removed_chrX:
                 # If removed_chrX is a list, remove the specified chromosomes; otherwise, remove a single string
                 if isinstance(removed_chrX, list):
                     for chrX in removed_chrX:
-                        df = df[~df["CHROM"].str.contains(chrX)]
+                        if chrX is not None:
+                            df = df[~df["CHROM"].str.contains(chrX)]
                 else:
                     df = df[~df["CHROM"].str.contains(removed_chrX)]
 
@@ -214,7 +269,10 @@ class Plotter:
         - Status labels are displayed above the histograms if provided in the `statuses` dictionary.
         """
 
-        ax.spines[["right", "top"]].set_visible(False)
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+
         ax.set_axisbelow(True)
 
         if font_size is not None:
@@ -356,7 +414,10 @@ class Plotter:
           can be customized.
         """
 
-        ax.spines[["right", "top"]].set_visible(False)
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+
         ax.set_axisbelow(True)
 
         if font_size is not None:
@@ -500,7 +561,9 @@ class Plotter:
           each reference population.
         """
 
-        ax.spines[["right", "top"]].set_visible(False)
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
         ax.set_axisbelow(True)
 
         if font_size is not None:
@@ -545,7 +608,6 @@ class Plotter:
         legend_ncol=2,
         linewidth=1.5,
         figure_grid=True,
-        font_size=None,
     ):
         """
         Draws a cumulative sum plot of runs of homozygosity (ROH) for multiple samples.
@@ -594,9 +656,6 @@ class Plotter:
         figure_grid : bool, optional
             Whether to display a grid on the plot. Defaults to True.
 
-        font_size : int or float, optional
-            Font size for the plot text. If not provided, the default font size is used.
-
         Notes:
         ------
         - The function reads ROH data from each file, sorts it by tract length, and calculates the cumulative sum of
@@ -604,11 +663,10 @@ class Plotter:
         - The plot uses a logarithmic x-axis to display a wide range of homozygous tract lengths.
         - A step plot is created for each sample, and a legend is added to differentiate between samples.
         """
-        ax.spines[["right", "top"]].set_visible(False)
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
         ax.set_axisbelow(True)
-
-        if font_size is not None:
-            plt.rcParams.update({"font.size": font_size})
 
         if colors is None:
             colors = distinctipy.get_colors(len(data))
@@ -617,20 +675,24 @@ class Plotter:
                 colors = sns.color_palette(colors, len(data))
 
         for count, f in enumerate(data):
-            df = pd.read_csv(f, sep="\t")
+            df = pd.read_csv(f, sep="\t", header=None, names=["scaffold", "start", "end", "length"])
             df.sort_values(by=["length"], inplace=True, ignore_index=True)
 
             df["cumsum"] = np.cumsum(df["length"]) / genome_length
+
+            label = f.split("/")[-1].split(".")[0]
+            print(f"{label}\t{len(df.index)}\t{df['length'].sum()}\t{df['length'].sum() / genome_length * 100}")
+
             df.loc[len(df.index)] = [None, None, None, xlim[1], df.iloc[-1]["cumsum"]]
 
-            ax.step(df["length"], df["cumsum"], label=f.split("/")[-1].split(".")[0], linewidth=linewidth, c=colors[count], where="post")
+            ax.step(df["length"], df["cumsum"], label=label, linewidth=linewidth, c=colors[count], where="post")
 
         ax.set_xscale("log")
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
-        ax.legend(title=r"$\mathit{" + legend_title + "}$", loc=legend_loc, ncol=legend_ncol)
+        ax.legend(title=r"$\mathit{" + legend_title.replace(" ", r"\,") + "}$", loc=legend_loc, ncol=legend_ncol)
 
         if figure_grid:
             ax.grid(True, linestyle="--", alpha=0.5)
@@ -643,6 +705,7 @@ class Plotter:
         legend_loc=(-0.005, 0.97),
         legend_ncol=4,
         xticks=[0, 25, 50, 75, 100],
+        bold_species_indices=None,
     ):
         """
         Draws a horizontal bar plot to visualize BUSCO (Benchmarking Universal Single-Copy Orthologs) results
@@ -653,15 +716,16 @@ class Plotter:
         ax : matplotlib.axes.Axes
             The axes on which to draw the plot.
 
-        data : list of str
-            A list of file paths to BUSCO short summary text files (short_summary_{species}.txt).
+        data : str or list of str
+            Path to a tab-separated file with columns [file_path, species_name, species_id]
+            or a list of paths to BUSCO short summary text files (short_summary_{species}.txt).
 
         colors : list of str, optional
             A list of four color hex codes used for the bar segments:
-                - colors[0]: Color for "Complete and single-copy BUSCOs (S)"
-                - colors[1]: Color for "Complete and duplicated BUSCOs (D)"
-                - colors[2]: Color for "Fragmented BUSCOs (F)"
-                - colors[3]: Color for "Missing BUSCOs (M)"
+            - colors[0]: Color for "Complete and single-copy BUSCOs (S)"
+            - colors[1]: Color for "Complete and duplicated BUSCOs (D)"
+            - colors[2]: Color for "Fragmented BUSCOs (F)"
+            - colors[3]: Color for "Missing BUSCOs (M)"
             Default is ["#23b4e8", "#008dbf", "#fbbc04", "#ea4335"].
 
         legend_loc : tuple of float, optional
@@ -673,58 +737,77 @@ class Plotter:
         xticks : list of int, optional
             X-axis tick positions, representing percentages. Defaults to [0, 25, 50, 75, 100].
 
-        Notes:
-        ------
-        - The function reads each BUSCO summary file, extracts the BUSCO scores for complete single-copy,
-          complete duplicated, fragmented, and missing categories, and organizes them into a DataFrame.
-        - A horizontal stacked bar plot is created for each species, with bar segments colored according
-          to the BUSCO category.
-        - Species names and BUSCO scores are annotated alongside the bars.
-        - The plot's aesthetics are customized by hiding the top and right spines, setting axis labels,
-          and positioning a legend.
+        bold_species_indices : list of int, optional
+            A list of indices (0-based) of species that should be labeled in bold. If specified,
+            these species will have their labels printed in bold font. Indices are counted from the
+            top to bottom, but can also be provided in reverse order (from bottom to top).
+            For example, if `bold_species_indices=[1, 2, 3]`, the species at positions 1, 2, and 3 from the bottom
+            will be labeled in bold.
         """
+        # Check if data is a TSV file or a list of file paths
+        if isinstance(data, str):
+            df_input = pd.read_csv(data, sep="\t", header=None, names=["file_path", "Species", "ID"])
+            df_input["Species"] = df_input["Species"].str.replace("_", " ")
+            file_paths = df_input["file_path"].tolist()
+        else:
+            file_paths = data
+            df_input = pd.DataFrame(
+                {
+                    "file_path": file_paths,
+                    "Species": [file_path.split("/")[-1][14:-4].replace("_", " ") for file_path in file_paths],
+                    "ID": [""] * len(file_paths),  # Placeholder if IDs are not provided
+                }
+            )
+
+        # Extract data from each BUSCO summary file
         data_list = []
-        for file_name in data:
-            with open(file_name, "r") as file:
+        for file_path, species, species_id in zip(df_input["file_path"], df_input["Species"], df_input["ID"]):
+            with open(file_path, "r") as file:
                 lines = file.readlines()
                 target_line = lines[8]
                 matches = re.findall(r"\d+\.\d+|\d+", target_line)
                 numbers = [float(match) if "." in match else int(match) for match in matches]
-                species_info = file_name.split("/")[-1][14:-4]
-                species, species_id = species_info.rsplit("_", 1)
                 line = [species, species_id, numbers[1], numbers[2], numbers[3], numbers[4], numbers[5]]
                 data_list.append(line)
 
-        # Create DataFrame
-        df = pd.DataFrame(data_list, columns=["Species", "ID", "S", "D", "F", "M", "N"])
+        # Create DataFrame for plotting
+        df = pd.DataFrame(data_list, columns=["Species", "ID", "S", "D", "F", "M", "N"]).iloc[::-1].reset_index(drop=True)
 
         # Customize plot
-        ax.spines[["left", "right", "top"]].set_visible(False)
+        # ax.spines[["left", "right", "top"]].set_visible(False)
+        for spine in ["left", "right", "top"]:
+            ax.spines[spine].set_visible(False)
+
         ax.set_axisbelow(True)
-        position = range(len(data))
+        position = range(len(file_paths))
 
         # Plot bars
-        ax.barh(position, df["S"], height=0.8, label="Complete and single-copy BUSCOs (S)", color=colors[0])
-        ax.barh(position, df["D"], height=0.8, left=df["S"], label="Complete and duplicated BUSCOs (D)", color=colors[1])
-        ax.barh(position, df["F"], height=0.8, left=df["S"] + df["D"], label="Fragmented BUSCOs (F)", color=colors[2])
-        ax.barh(position, df["M"], height=0.8, left=df["S"] + df["D"] + df["F"], label="Missing BUSCOs (M)", color=colors[3])
+        ax.barh(position, df["S"], height=0.9, label="Complete and single-copy BUSCOs (S)", color=colors[0])
+        ax.barh(position, df["D"], height=0.9, left=df["S"], label="Complete and duplicated BUSCOs (D)", color=colors[1])
+        ax.barh(position, df["F"], height=0.9, left=df["S"] + df["D"], label="Fragmented BUSCOs (F)", color=colors[2])
+        ax.barh(position, df["M"], height=0.9, left=df["S"] + df["D"] + df["F"], label="Missing BUSCOs (M)", color=colors[3])
 
         # Add legend
         ax.legend(ncol=legend_ncol, loc=legend_loc, handlelength=0.8, frameon=False)
 
         # Set ticks and labels
+        # ax.yaxis.set_ticks_position('none')
         ax.set_yticks(range(len(df["Species"].tolist())))
         ax.set_yticklabels(["" for _ in range(len(df["Species"].tolist()))])
-        # ax.set_xlim(0, 100)
+        ax.set_xlim(0, 100)
         ax.set_xticks(xticks)
         ax.set_xticklabels([f"{i}%" for i in xticks])
 
-        # Annotate species and BUSCO scores
-        ax.text(-1, len(data), "Вид", va="center", ha="right", fontweight="semibold")
-        ax.text(1, len(data), "ID", va="center", ha="left", fontweight="semibold")
+        # Invert bold_species_indices
+        if bold_species_indices:
+            bold_species_indices = [len(df) - 1 - idx for idx in bold_species_indices]
+
+        # Annotate species, IDs, and BUSCO scores
+        ax.text(-1, len(df.index), "Species", va="center", ha="right", fontweight="semibold")
+        ax.text(1, len(df.index), "ID", va="center", ha="left", fontweight="semibold") if not df_input["ID"].eq("").all() else None
         for i, row in df.iterrows():
-            ax.text(xticks[0] - 1, i, f'{row["Species"]}', va="center", ha="right", fontweight="medium", style="italic")
-            ax.text(-1, i, f'{row["Species"]}', va="center", ha="right", fontweight="medium", style="italic")
+            fontweight = "bold" if bold_species_indices and i in bold_species_indices else "medium"
+            ax.text(xticks[0] - 1, i, f'{row["Species"]}', va="center", ha="right", fontweight=fontweight, style="italic")
             ax.text(1, i, f'{row["ID"]}', va="center", ha="left", fontweight="bold", color="white")
             ax.text(
                 df["S"].min() - 2,
@@ -735,3 +818,745 @@ class Plotter:
                 fontweight="bold",
                 color="white",
             )
+
+    def draw_histogram_with_stats(self, ax, data, bins, show_legend=True, legend_loc="upper right", legend_ncol=1):
+        """
+        Draws a histogram with key statistics.
+
+        Parameters:
+        -----------
+        ax : matplotlib.axes.Axes
+            The axes on which to draw the histogram.
+
+        data : array-like
+            The dataset to plot as a histogram.
+
+        bins : int or sequence of scalars or str
+            Number of bins or bin edges for the histogram.
+
+        show_legend : bool, optional
+            Whether to display a legend. Default is True.
+
+        legend_loc : str, optional
+            Location of the legend on the plot. Default is "upper right".
+
+        legend_ncol : int, optional
+            Number of columns in the legend. Default is 1.
+
+        Additional Details:
+        -------------------
+        - Adds vertical lines for:
+            * Mean (red dashed line).
+            * Median (blue dashed line).
+            * 5th and 95th percentiles (purple dashed-dotted lines).
+        - Shades regions within ±1, ±2, and ±3 standard deviations of the mean:
+            * ±1σ in orange.
+            * ±2σ in yellow.
+            * ±3σ in green.
+        """
+        # Customize plot
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+
+        # Calculating statistics
+        mean = np.mean(data)
+        median = np.median(data)
+        std_dev = np.std(data)
+        percentile_5 = np.percentile(data, 5)
+        percentile_95 = np.percentile(data, 95)
+
+        # Mean line (red dashed)
+        ax.axvline(mean, color="red", linestyle="--", label=f"Mean: {mean:.0f}")
+
+        # Median line (blue dashed)
+        ax.axvline(median, color="blue", linestyle="--", label=f"Median: {median:.0f}")
+
+        # 5th and 95th percentiles lines
+        ax.axvline(percentile_5, color="purple", linestyle="-.", label=f"5th percentile: {percentile_5:.0f}")
+        ax.axvline(percentile_95, color="purple", linestyle="-.", label=f"95th percentile: {percentile_95:.0f}")
+
+        # Shaded areas for mean ± std_dev * 1, 2, 3
+        for i in range(1, 4):
+            color = "orange" if i == 1 else "yellow" if i == 2 else "green"
+            ax.axvspan(mean - i * std_dev, mean + i * std_dev, color=color, alpha=0.1)
+            left_value = mean - i * std_dev
+            right_value = mean + i * std_dev
+            ax.axvline(left_value, color=color, linestyle="--", label=f"Mean - {i}σ: {left_value:.0f}")
+            ax.axvline(right_value, color=color, linestyle="--", label=f"Mean + {i}σ: {right_value:.0f}")
+
+        # Plotting histogram
+        ax.hist(data, bins=bins, edgecolor="black")
+
+        # Legend and labels
+        if show_legend:
+            ax.legend(ncol=legend_ncol, loc=legend_loc)
+
+    def classify_roh(self, length):
+        if length < 1_000_000:
+            return "S"
+        elif length >= 10_000_000:
+            return "UL"
+        else:
+            return "L"
+
+    def draw_roh_barplot(
+        self,
+        ax,
+        data,
+        genome_length,
+        colors={"N": "#23b4e8", "S": "#008dbf", "L": "#fbbc04", "UL": "#ea4335"},
+        xticks=[50, 60, 70, 80, 90, 100],
+        xlim=(45, 100),
+        sorting=True,
+        groups=None,
+        show_legend=True,
+        show_annotation=False,
+        legend_loc=(0.25, 0.97),
+        legend_ncol=4,
+    ):
+        # Customize plot
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["left", "right", "top"]:
+            ax.spines[spine].set_visible(False)
+
+        # Загружаем данные для каждого файла
+        sample_data = {}
+        for file_path in data:
+            sample_name = os.path.basename(file_path).split(".")[0]
+            df = pd.read_csv(file_path, sep="\t", header=None, names=["scaffold", "start", "end", "length"])
+
+            # Преобразование столбца length в числовой тип
+            df["length"] = pd.to_numeric(df["length"])
+
+            # Удаление строк с некорректными значениями (NaN)
+            df = df.dropna(subset=["length"])
+
+            df["classification"] = df["length"].apply(self.classify_roh)
+
+            # Суммируем длины ROH по категориям
+            total_lengths = df.groupby("classification")["length"].sum().to_dict()
+
+            # Рассчитываем долю от генома
+            for category in ["S", "L", "UL"]:
+                total_lengths[category] = (total_lengths.get(category, 0) / genome_length) * 100
+
+            # Добавляем Non-ROHs
+            total_roh_percentage = sum(total_lengths.values())
+            total_lengths["N"] = max(0, 100 - total_roh_percentage)
+
+            # Сохраняем данные для образца
+            sample_data[sample_name] = total_lengths
+
+        # Преобразуем данные в DataFrame
+        result_df = pd.DataFrame.from_dict(sample_data, orient="index").fillna(0)
+        result_df = result_df[["N", "S", "L", "UL"]]
+
+        # Сортировка DataFrame, если sorting=True
+        if sorting:
+            result_df = result_df.sort_values(by=["UL", "L", "S", "N"], ascending=[False, False, False, False])
+
+        # Если группы не указаны, все образцы считаются одной группой
+        if not groups:
+            groups = {"All": result_df.index.tolist()}
+
+        # Создаём упорядоченный список индексов с учётом группировки
+        grouped_samples = []
+        for group, samples in groups.items():
+            # Отбираем только те образцы, которые есть в DataFrame
+            group_samples = [sample for sample in samples if sample in result_df.index]
+            if sorting:
+                # Сортируем внутри группы
+                group_df = result_df.loc[group_samples]
+                group_samples = group_df.sort_values(by=["UL", "L", "S", "N"], ascending=[False, False, False, False]).index.tolist()
+            grouped_samples.extend(group_samples)
+
+        # Переставляем индексы DataFrame по группам
+        result_df = result_df.loc[grouped_samples]
+
+        # Построение накопительного барплота (заменяем вертикальные полосы на горизонтальные)
+        category_labels = {"N": "Non-RoHs (N)", "S": "Short RoHs (S)", "L": "Long RoHs (L)", "UL": "Ultra Long RoHs (UL)"}
+        bottom = None
+        for category, color in colors.items():
+            ax.barh(
+                result_df.index,
+                result_df[category],
+                left=bottom,
+                color=color,
+                label=category_labels[category],
+                height=0.9,
+            )
+
+            bottom = result_df[category] if bottom is None else bottom + result_df[category]
+
+        # Настройка начальной закраски области
+        if xticks[0] != 0:
+            ax.axvspan(xlim[0], xticks[0], color="white")
+
+        # Настройка осей и легенды для горизонтальной диаграммы
+        ax.yaxis.set_ticks_position("none")
+        # Убираем стандартные метки оси Y
+        ax.set_yticks([])
+        ax.set_yticklabels([])
+
+        # Добавляем пользовательские метки оси Y в позиции x=20
+        for i, label in enumerate(result_df.index):
+            ax.text(xticks[0] - 0.5, i, label, va="center", ha="right")  # y-координата (индекс строки)
+
+        ax.set_xlim(xlim)
+        ax.set_xticks(xticks)
+        ax.set_xticklabels([f"{i}%" for i in xticks])
+        ax.spines["bottom"].set_bounds(xticks[0], xlim[1])
+        if show_legend:
+            ax.legend(loc=legend_loc, ncol=legend_ncol, handlelength=0.8, frameon=False)
+
+        # Добавление вертикальных линий для обозначения групп
+        if groups and "All" not in groups:
+            for group, samples in groups.items():
+                # Убедимся, что порядок group_samples соответствует result_df.index
+                group_samples = [sample for sample in result_df.index if sample in samples]
+                if group_samples:
+                    # Индексы первого и последнего образцов группы
+                    start_idx = result_df.index.get_loc(group_samples[0])
+                    end_idx = result_df.index.get_loc(group_samples[-1])
+
+                    # Построение вертикальной линии
+                    ax.vlines(
+                        x=xlim[0],
+                        ymin=start_idx - 0.25,
+                        ymax=end_idx + 0.25,
+                        colors="black",
+                        linewidth=1,
+                    )
+
+                    # Добавление названия группы
+                    y_pos = (start_idx + end_idx) / 2  # Среднее значение для корректного расположения
+                    ax.text(xlim[0] - 1, y_pos, group, rotation=0, va="center", ha="right", fontstyle="italic")
+
+        # Добавление подписей на каждом баре
+        if show_annotation:
+            for i, sample in enumerate(result_df.index):
+                values = result_df.loc[sample, ["N", "S", "L", "UL"]]
+                text = f'  N: {values["N"]:.1f}%   |   S: {values["S"]:.1f}%   |   L: {values["L"]:.1f}%   |   UL: {values["UL"]:.1f}%'
+                print(f"{sample}\t{values['N']:.1f}%\t{values['S']:.1f}%\t{values['L']:.1f}%\t{values['UL']:.1f}%")
+                ax.text(
+                    xticks[0],
+                    i,  # Индекс строки
+                    text,  # Подпись
+                    va="center",  # Выравнивание по вертикали
+                    ha="left",  # Выравнивание по горизонтали
+                    fontsize=8,
+                    color="white",
+                    fontweight="bold",
+                )
+
+    def read_series(self, s):
+        return pd.read_csv(s, header=None).squeeze("columns") if os.path.exists(s) else pd.Series(s.split(","))
+
+    def rgb_tuple_to_hex(self, rgb_tuple):
+        color_code = "#"
+        for i in [0, 1, 2]:
+            color_code += "{:02X}".format(int(255 * rgb_tuple[i]))
+        return color_code
+
+    def draw_variant_window_densities(
+        self,
+        ax,
+        input_file,
+        input_type="vcf",
+        output_prefix=None,
+        output_formats=[],
+        title=False,
+        title_fontsize=20,
+        window_size=1000000,
+        window_step=None,
+        density_multiplier=1000,
+        scaffold_white_list=pd.Series(dtype=str),
+        scaffold_ordered_list=pd.Series(dtype=str),
+        scaffold_length_file=[],
+        scaffold_syn_file=None,
+        syn_file_key_column=0,
+        syn_file_value_column=1,
+        figure_width=10,
+        figure_height_per_scaffold=0.5,
+        figure_header_height=0,
+        colormap="jet",
+        custom_color_list=None,
+        density_thresholds=(0.0, 0.1, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5),
+        density_thresholds_expression_type="left_open",
+        skip_top_interval=False,
+        skip_bottom_interval=False,
+        test_colormaps=False,
+        hide_track_label=True,
+        subplots_adjust_left=None,
+        subplots_adjust_top=None,
+        subplots_adjust_right=None,
+        subplots_adjust_bottom=None,
+        only_count=False,
+        x_tick_fontsize=None,
+        stranded=False,
+        rounded=True,
+        middle_break=False,
+        stranded_end=False,
+        feature_name="SNPs",
+        centromere_bed=None,
+        highlight_file=None,
+    ):
+        # coverage=None,
+        # scaffold_column_name="scaffold",
+        # window_column_name="window",
+        # coverage_column_name="median",
+        # mean_coverage=None,
+        # max_coverage_threshold=2.5,
+        # min_coverage_threshold=0.5,
+        # scaffold_black_list=pd.Series(dtype=str),
+        # sort_scaffolds=False,
+        # masking_gff_list=None,
+        # masking_threshold=0.5,
+
+        # if not output_prefix
+        #     raise ValueError("Output prefix is required.")
+
+        scaffold_white_list = self.read_series(scaffold_white_list)
+        scaffold_ordered_list = self.read_series(scaffold_ordered_list)
+
+        scaffold_ordered_list = scaffold_ordered_list[::-1]
+
+        if isinstance(scaffold_ordered_list, list):
+            if not scaffold_ordered_list:
+                scaffold_ordered_list = scaffold_white_list
+        else:
+            if scaffold_ordered_list.empty:
+                scaffold_ordered_list = scaffold_white_list
+
+        if custom_color_list is not None:
+            if len(custom_color_list) != len(density_thresholds):
+                raise ValueError(
+                    "ERROR!!! Custom color list is set, but the number of colors ({0}) in the list is not equal to the number of the thresholds (1)!".format(
+                        len(custom_color_list), len(density_thresholds)
+                    )
+                )
+
+        variants = CollectionVCF(input_file, parsing_mode="only_coordinates")
+
+        chr_len_df = (
+            pd.read_csv(scaffold_length_file, sep="\t", header=None, index_col=0) if scaffold_length_file else deepcopy(variants.scaffold_length)
+        )
+        chr_len_df.index = pd.Index(map(str, chr_len_df.index))
+        chr_len_df.index.name = "scaffold"
+        chr_len_df.columns = ["length"]
+
+        chr_syn_dict = SynDict(filename=scaffold_syn_file, key_index=syn_file_key_column, value_index=syn_file_value_column)
+
+        if centromere_bed:
+            centromere_df = pd.read_csv(centromere_bed, usecols=(0, 1, 2), index_col=0, header=None, sep="\t", names=["scaffold_id", "start", "end"])
+            centromere_df.rename(index=chr_syn_dict, inplace=True)
+        else:
+            centromere_df = None
+
+        if input_type == "vcf":
+            count_df = StatsVCF.count_variants_in_windows(
+                variants,
+                window_size,
+                window_step,
+                reference_scaffold_lengths=chr_len_df,
+                ignore_scaffolds_shorter_than_window=True,
+                # output_prefix=output_prefix,
+                skip_empty_windows=False,
+                expression=None,
+                per_sample_output=False,
+                scaffold_white_list=scaffold_white_list,
+                scaffold_syn_dict=chr_syn_dict,
+            )
+            feature_df, track_df = StatsVCF.convert_variant_count_to_feature_df(count_df, window_size, window_step)
+            # feature_df.to_csv("{}.features.counts".format(output_prefix), sep="\t", header=True, index=True)
+            feature_df[feature_df.columns[-1]] = feature_df[feature_df.columns[-1]] * float(density_multiplier) / float(window_size)
+
+            # feature_df.to_csv("{}.features.bed".format(output_prefix), sep="\t", header=True, index=True)
+
+        elif input_type == "bedgraph":
+            track_df = pd.read_csv(
+                input,
+                sep="\t",
+                names=["scaffold", "start", "end", "value"],
+                header=None,
+                index_col=0,
+                na_values=".",
+                dtype={"scaffold": str, "start": int, "end": int, "value": float},
+            )
+            if scaffold_syn_file:
+                track_df.rename(index=chr_syn_dict, inplace=True)
+            track_df["value"] = track_df["value"].astype(float)
+
+        if scaffold_syn_file:
+            chr_len_df.rename(index=chr_syn_dict, inplace=True)
+
+        # scale counts
+        track_df[track_df.columns[-1]] = track_df[track_df.columns[-1]] * float(density_multiplier) / float(window_size)
+
+        if track_df.index.nlevels > 1:
+            # drop second level of index if it was added by groupby
+            track_df = (
+                track_df.groupby("scaffold").apply(lambda df: df[df["end"] <= chr_len_df.loc[df.index[0], "length"]]).reset_index(level=1, drop=True)
+            )
+
+        if not only_count:
+            if custom_color_list is not None:
+                cmap_list = ["custom_list"]
+            else:
+                cmap_list = Visualization.colormap_list if test_colormaps else [colormap]
+
+            for colormap in cmap_list:
+                if colormap == "custom_list":
+                    colors = custom_color_list
+                else:
+                    cmap = plt.get_cmap(colormap, len(density_thresholds))
+                    colors = [self.rgb_tuple_to_hex(cmap(i)[:3]) for i in range(0, len(density_thresholds))]
+
+                color_expression = partial(
+                    Visualization.color_threshold_expression,
+                    thresholds=density_thresholds,
+                    colors=colors,
+                    background="white",
+                    interval_type=density_thresholds_expression_type,
+                    skip_top_interval=skip_top_interval,
+                    skip_bottom_interval=skip_bottom_interval,
+                )
+
+                track_with_colors_df = Visualization.add_color_to_track_df(
+                    track_df, color_expression, value_column_index=-1  # TODO fix it, add support for multiple tracks in the file
+                )
+
+                # track_with_colors_df.to_csv("{}.{}.track.bed".format(output_prefix, colormap), sep="\t", header=True, index=True)
+                # print(feature_with_colors_df)
+                # print(scaffold_ordered_list)
+                Visualization.draw_features(
+                    {"TR": track_with_colors_df},
+                    chr_len_df,
+                    scaffold_ordered_list,
+                    output_prefix,
+                    legend=Visualization.density_legend(
+                        colors,
+                        density_thresholds,
+                        feature_name=feature_name,
+                        interval_type=density_thresholds_expression_type,
+                        skip_top_interval=skip_top_interval,
+                        skip_bottom_interval=skip_bottom_interval,
+                    ),
+                    centromere_df=centromere_df,
+                    highlight_df=highlight_file,
+                    figure_width=figure_width,
+                    figure_height_per_scaffold=figure_height_per_scaffold,
+                    figure_header_height=figure_header_height,
+                    dpi=300,
+                    default_color="red",
+                    title=title,
+                    extensions=output_formats,
+                    feature_start_column_id="start",
+                    feature_end_column_id="end",
+                    feature_color_column_id="color",
+                    feature_length_column_id="length",
+                    subplots_adjust_left=subplots_adjust_left,
+                    subplots_adjust_bottom=subplots_adjust_bottom,
+                    subplots_adjust_right=subplots_adjust_right,
+                    subplots_adjust_top=subplots_adjust_top,
+                    show_track_label=not hide_track_label,
+                    show_trackgroup_label=True,
+                    close_figure=False,
+                    subplot_scale=False,
+                    track_group_scale=False,
+                    # track_group_distance=2,
+                    # xmax_multiplier=1.3,
+                    # ymax_multiplier=1.00,
+                    stranded_tracks=stranded,
+                    rounded_tracks=rounded,
+                    middle_break=middle_break,
+                    stranded_end_tracks=stranded_end,
+                    xtick_fontsize=x_tick_fontsize,
+                    subplot_title_fontsize=title_fontsize,
+                    subplot_title_fontweight="bold",
+                    axes=ax,
+                )
+
+    def draw_features(
+        self,
+        ax,
+        input_file,
+        input_type="str",
+        header=None,
+        legend=None,
+        output_prefix=None,
+        output_formats=[],
+        title=False,
+        start_column_name=None,
+        end_column_name=None,
+        color_column_name=None,
+        default_color="tab:blue",
+        scaffold_white_list=pd.Series(dtype=str),
+        scaffold_ordered_list=pd.Series(dtype=str),
+        scaffold_length_file=None,
+        scaffold_syn_file=None,
+        syn_file_key_column=0,
+        syn_file_value_column=1,
+        colormap="jet",
+        hide_track_label=True,
+        x_tick_type="nucleotide",
+        feature_shape="rectangle",
+        subplots_adjust_left=None,
+        subplots_adjust_top=None,
+        subplots_adjust_right=None,
+        subplots_adjust_bottom=None,
+        figure_width=10,
+        figure_height_per_scaffold=0.5,
+        figure_header_height=0,
+        verbose=False,
+        subplot_scale=False,
+        track_group_scale=False,
+        x_tick_fontsize=None,
+        stranded=False,
+        rounded=True,
+        stranded_end=False,
+        fill_empty_tracks=False,
+        empty_color="lightgrey",
+        centromere_bed=None,
+        highlight_file=None,
+        title_fontsize=20,
+    ):
+        # scaffold_column_name=None,
+        # scaffold_black_list=pd.Series(dtype=str),
+        # sort_scaffolds=False,
+        # figure_height_per_scaffold=0.5,
+        # print(scaffold_ordered_list)
+        scaffold_white_list = self.read_series(scaffold_white_list)
+        scaffold_ordered_list = self.read_series(scaffold_ordered_list)
+        scaffold_ordered_list = scaffold_ordered_list[::-1]
+
+        chr_syn_dict = SynDict(filename=scaffold_syn_file, key_index=syn_file_key_column, value_index=syn_file_value_column)
+
+        # print(scaffold_ordered_list)
+        if isinstance(scaffold_ordered_list, list):
+            if not scaffold_ordered_list:
+                scaffold_ordered_list = deepcopy(scaffold_white_list)
+                scaffold_ordered_list.replace(chr_syn_dict, inplace=True)
+        else:
+            # print("AAAA")
+            if scaffold_ordered_list.empty:
+                scaffold_ordered_list = deepcopy(scaffold_white_list)
+                scaffold_ordered_list.replace(chr_syn_dict, inplace=True)
+
+        if centromere_bed:
+            centromere_df = pd.read_csv(centromere_bed, usecols=(0, 1, 2), index_col=0, header=None, sep="\t", names=["scaffold_id", "start", "end"])
+            centromere_df.rename(index=chr_syn_dict, inplace=True)
+        else:
+            centromere_df = None
+        try:
+            if input_type == "str":
+                feature_df = CollectionSTR(
+                    in_file=input_file, records=None, format="filtered_str", parsing_mode="all", black_list=(), white_list=(), syn_dict=chr_syn_dict
+                )
+
+                feature_df.records.set_index("scaffold_id", inplace=True)
+
+                feature_start_column_id = start_column_name if start_column_name else "start"
+                feature_end_column_id = end_column_name if end_column_name else "end"
+
+            elif input_type == "gff":
+                feature_df = CollectionGFF(in_file=input_file, parsing_mode="only_coordinates")
+
+                feature_start_column_id = start_column_name if start_column_name else "start"
+                feature_end_column_id = end_column_name if end_column_name else "end"
+
+            elif input_type == "bed":
+                feature_df = CollectionBED(in_file=input_file, parsing_mode="coordinates_only", format="bed")
+
+                feature_start_column_id = "start"
+                feature_end_column_id = "end"
+
+            elif input_type == "bed_table":
+                feature_df = CollectionBED(in_file=input_file, parsing_mode="complete", format="bed", header_in_file=False)
+                feature_start_column_id = "start"
+                feature_end_column_id = "end"
+
+            elif input_type == "bedgraph":
+                feature_df = CollectionBED(in_file=input_file, parsing_mode="all", format="bed")
+                feature_df.records.columns = pd.Index(["start", "end", "value"])
+                feature_df.records.index.name = "scaffold"
+                feature_start_column_id = "start"
+                feature_end_column_id = "end"
+            elif input_type == "bed_track":
+                feature_df = CollectionBED(
+                    in_file=input_file,
+                    parsing_mode="all",
+                    format="bed_track",
+                )
+                print(feature_df.records)
+                feature_df.records.columns = pd.Index(["start", "end", "value", "color"])
+                feature_df.records.index.name = "scaffold"
+                feature_start_column_id = "start"
+                feature_end_column_id = "end"
+                color_column_name = "color"
+            elif input_type == "tab6":
+                feature_df = CollectionBLAST(in_file=input_file, parsing_mode="complete")
+                feature_df.records.reset_index(level="query_id", inplace=True)
+                feature_start_column_id = start_column_name if start_column_name else "target_start"
+                feature_end_column_id = end_column_name if end_column_name else "target_end"
+            elif input_type == "tab6_colored":
+                feature_df = CollectionBLAST(in_file=input_file, parsing_mode="complete", format="tab6_colored", header=header)
+                feature_df.records.reset_index(level="query_id", inplace=True)
+                feature_start_column_id = start_column_name if start_column_name else "target_start"
+                feature_end_column_id = end_column_name if end_column_name else "target_end"
+            else:
+                raise ValueError("ERROR!!! Unrecognized input type ({}). ".format(input_type))
+        except pd.errors.EmptyDataError:
+            print(
+                "Empty input file. Silent exit."
+            )  # try-except added to handle case when input file is empty without raising exception. For use in snakemake
+            exit(0)
+
+        legend_df = pd.read_csv(legend, header=None, index_col=0, sep="\t") if legend else None
+
+        # print(scaffold_white_list)
+        # print(feature_df.records)
+        scaffold_to_keep = StatsVCF.get_filtered_entry_list(
+            feature_df.records.index.get_level_values(level=0).unique().to_list(), entry_white_list=scaffold_white_list
+        )
+        # print(scaffold_to_keep)
+        # print(scaffold_to_keep)
+        # remove redundant scaffolds
+        # print(scaffold_white_list)
+        # print(feature_df.records)
+        # print(scaffold_to_keep)
+        feature_df.records = feature_df.records[feature_df.records.index.isin(scaffold_to_keep)]
+        # print("BBBBBBbb")
+        # print(scaffold_white_list)
+        # print(scaffold_ordered_list)
+        if not scaffold_white_list.empty:
+            scaffold_ordered_list = scaffold_ordered_list[scaffold_ordered_list.isin(pd.Series(scaffold_white_list).replace(chr_syn_dict))]
+        # print("CCCC")
+        # print(scaffold_ordered_list)
+        # print(scaffold_to_keep)
+        # print(pd.Series(scaffold_to_keep).replace(chr_syn_dict))
+        chr_len_df = pd.read_csv(scaffold_length_file, sep="\t", header=None, names=("scaffold", "length"), index_col=0)
+        chr_len_df.index = pd.Index(list(map(str, chr_len_df.index)))
+
+        # print(chr_len_df)
+
+        # print(feature_df.records)
+        if scaffold_syn_file:
+            chr_len_df.rename(index=chr_syn_dict, inplace=True)
+            feature_df.records.rename(index=chr_syn_dict, inplace=True)
+        if verbose:
+            print(chr_syn_dict)
+            print(feature_df.records)
+
+        # print(chr_len_df)
+        # print({"features": feature_df})
+        # print(feature_df.records.columns)
+        # print(feature_df.records)
+        # print(chr_len_df)
+        # print(scaffold_ordered_list)
+        Visualization.draw_features(
+            {"features": feature_df},
+            chr_len_df,
+            scaffold_ordered_list,
+            output_prefix,
+            legend=Visualization.feature_legend(legend_df, colormap=colormap),
+            # legend_df=legend_df,
+            centromere_df=centromere_df,
+            highlight_df=highlight_file,
+            figure_width=figure_width,
+            figure_height_per_scaffold=figure_height_per_scaffold,
+            figure_header_height=figure_header_height,
+            dpi=300,
+            # colormap=None, thresholds=None, colors=None, background=None,
+            default_color=default_color,
+            title=title,
+            extensions=output_formats,
+            feature_shape=feature_shape,
+            feature_start_column_id=feature_start_column_id,
+            feature_end_column_id=feature_end_column_id,
+            feature_color_column_id=color_column_name,
+            feature_length_column_id="length",
+            subplots_adjust_left=subplots_adjust_left,
+            subplots_adjust_bottom=subplots_adjust_bottom,
+            subplots_adjust_right=subplots_adjust_right,
+            subplots_adjust_top=subplots_adjust_top,
+            show_track_label=not hide_track_label,
+            show_trackgroup_label=True,
+            subplot_scale=subplot_scale,
+            track_group_scale=track_group_scale,
+            stranded_tracks=stranded,
+            rounded_tracks=rounded,
+            stranded_end_tracks=stranded_end,
+            fill_empty_tracks=fill_empty_tracks,
+            empty_color=empty_color,
+            xtick_fontsize=x_tick_fontsize,
+            subplot_title_fontsize=title_fontsize,
+            subplot_title_fontweight="bold",
+            x_tick_type=x_tick_type,
+            # xmax_multiplier=2,
+            axes=ax,
+        )
+
+        # """
+        # Visualizes the distribution of ROHs (Runs of Homozygosity) across genome categories
+        # using a horizontal stacked bar plot.
+        #
+        # Parameters:
+        # -----------
+        # ax : matplotlib.axes.Axes
+        #     The axes on which to draw the bar plot.
+        #
+        # data : list of str
+        #     A list of file paths to BED files, where each file contains ROH data for a single sample.
+        #     Each file should have tab-delimited columns: `scaffold`, `start`, `end`, `length`.
+        #
+        # genome_length : int
+        #     The total length of the genome, used to calculate percentages.
+        #
+        # colors : dict, optional
+        #     A dictionary mapping ROH categories to their respective colors.
+        #     Default is `{"N": "#23b4e8", "S": "#008dbf", "L": "#fbbc04", "UL": "#ea4335"}`.
+        #
+        # xticks : list of int, optional
+        #     X-axis tick positions, representing percentages. Defaults to [0, 25, 50, 75, 100].
+        #
+        # xlabel : str, optional
+        #     The label for the x-axis. Defaults to "Percentage of genome (%)".
+        #
+        # title : str, optional
+        #     Title of the plot. Default is None (no title).
+        #
+        # show_legend : bool, optional
+        #     Whether to display a legend. Default is True.
+        #
+        # legend_loc : str, optional
+        #     Location of the legend on the plot. Default is (-0.005, 0.97).
+        #
+        # legend_ncol : int, optional
+        #     Number of columns in the legend. Default is 4.
+        #
+        # sorting : bool, optional
+        #     If True, bars are sorted by the percentage of Ultra Long ROHs (UL) in descending order.
+        #     If False, bars follow the reverse order of `data`. Default is False.
+        #
+        # groups : dict, optional
+        #     A dictionary where keys are group names and values are lists of sample names.
+        #     This allows grouping samples on the y-axis with the group name followed by sample names.
+        #     If None, no grouping is applied. Default is None.
+        #
+        # Additional Details:
+        # --------------------
+        # - Each BED file represents a sample and contains ROH data with the following format:
+        #     * `scaffold`: Chromosome or scaffold identifier.
+        #     * `start`: Start position of the ROH.
+        #     * `end`: End position of the ROH.
+        #     * `length`: Length of the ROH (in base pairs).
+        # - Categories:
+        #     * `"N"`: Non-ROHs (portion of the genome not covered by ROHs).
+        #     * `"S"`: Short ROHs (<1,000,000 bp).
+        #     * `"L"`: Long ROHs (1,000,000–10,000,000 bp).
+        #     * `"UL"`: Ultra Long ROHs (≥10,000,000 bp).
+        # - The function calculates the percentage of the genome occupied by each ROH category for each sample.
+        # - The stacked bar plot ensures each bar represents 100% of the genome for a given sample.
+        # """
