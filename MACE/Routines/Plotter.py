@@ -24,6 +24,7 @@ from RouToolPa.Parsers.VCF import CollectionVCF
 from MACE.Routines import StatsVCF, Visualization
 
 # TODO: add PCA plot from PRINK
+# TODO: add ete3 plots
 
 
 class Plotter:
@@ -910,11 +911,73 @@ class Plotter:
         xlim=(45, 100),
         sorting=True,
         groups=None,
-        show_legend=True,
         show_annotation=False,
+        show_legend=True,
         legend_loc=(0.25, 0.97),
         legend_ncol=4,
     ):
+        """
+        Visualizes the distribution of ROHs (Runs of Homozygosity) across genome categories
+        using a horizontal stacked bar plot.
+
+        Parameters:
+        -----------
+        ax : matplotlib.axes.Axes
+            The axes on which to draw the bar plot.
+
+        data : list of str
+            A list of file paths to BED files, where each file contains ROH data for a single sample.
+            Each file should have tab-delimited columns: `scaffold`, `start`, `end`, `length`.
+
+        genome_length : int
+            The total length of the genome, used to calculate percentages.
+
+        colors : dict, optional
+            A dictionary mapping ROH categories to their respective colors.
+            Default is `{"N": "#23b4e8", "S": "#008dbf", "L": "#fbbc04", "UL": "#ea4335"}`.
+
+        xticks : list of int, optional
+            X-axis tick positions, representing percentages. Defaults to [0, 25, 50, 75, 100].
+
+        xlim : tuple of float, optional
+            Limits for the x-axis (log scale), representing the range of tract lengths to display. Defaults to (45, 100).
+
+        sorting : bool, optional
+            If True, bars are sorted by the percentage of Ultra Long ROHs (UL) in descending order.
+            If False, bars follow the reverse order of `data`. Default is False.
+
+        groups : dict, optional
+            A dictionary where keys are group names and values are lists of sample names.
+            This allows grouping samples on the y-axis with the group name followed by sample names.
+            If None, no grouping is applied. Default is None.
+
+        show_annotation : bool, optional
+            Whether to display an annotation. Default is False.
+
+        show_legend : bool, optional
+            Whether to display a legend. Default is True.
+
+        legend_loc : str, optional
+            Location of the legend on the plot. Default is (0.25, 0.97).
+
+        legend_ncol : int, optional
+            Number of columns in the legend. Default is 4.
+
+        Additional Details:
+        --------------------
+        - Each BED file represents a sample and contains ROH data with the following format:
+            * `scaffold`: Chromosome or scaffold identifier.
+            * `start`: Start position of the ROH.
+            * `end`: End position of the ROH.
+            * `length`: Length of the ROH (in base pairs).
+        - Categories:
+            * `"N"`: Non-ROHs (portion of the genome not covered by ROHs).
+            * `"S"`: Short ROHs (<1,000,000 bp).
+            * `"L"`: Long ROHs (1,000,000–10,000,000 bp).
+            * `"UL"`: Ultra Long ROHs (≥10,000,000 bp).
+        - The function calculates the percentage of the genome occupied by each ROH category for each sample.
+        - The stacked bar plot ensures each bar represents 100% of the genome for a given sample.
+        """
         # Customize plot
         # ax.spines[["right", "top"]].set_visible(False)
         for spine in ["left", "right", "top"]:
@@ -1497,66 +1560,3 @@ class Plotter:
             # xmax_multiplier=2,
             axes=ax,
         )
-
-        # """
-        # Visualizes the distribution of ROHs (Runs of Homozygosity) across genome categories
-        # using a horizontal stacked bar plot.
-        #
-        # Parameters:
-        # -----------
-        # ax : matplotlib.axes.Axes
-        #     The axes on which to draw the bar plot.
-        #
-        # data : list of str
-        #     A list of file paths to BED files, where each file contains ROH data for a single sample.
-        #     Each file should have tab-delimited columns: `scaffold`, `start`, `end`, `length`.
-        #
-        # genome_length : int
-        #     The total length of the genome, used to calculate percentages.
-        #
-        # colors : dict, optional
-        #     A dictionary mapping ROH categories to their respective colors.
-        #     Default is `{"N": "#23b4e8", "S": "#008dbf", "L": "#fbbc04", "UL": "#ea4335"}`.
-        #
-        # xticks : list of int, optional
-        #     X-axis tick positions, representing percentages. Defaults to [0, 25, 50, 75, 100].
-        #
-        # xlabel : str, optional
-        #     The label for the x-axis. Defaults to "Percentage of genome (%)".
-        #
-        # title : str, optional
-        #     Title of the plot. Default is None (no title).
-        #
-        # show_legend : bool, optional
-        #     Whether to display a legend. Default is True.
-        #
-        # legend_loc : str, optional
-        #     Location of the legend on the plot. Default is (-0.005, 0.97).
-        #
-        # legend_ncol : int, optional
-        #     Number of columns in the legend. Default is 4.
-        #
-        # sorting : bool, optional
-        #     If True, bars are sorted by the percentage of Ultra Long ROHs (UL) in descending order.
-        #     If False, bars follow the reverse order of `data`. Default is False.
-        #
-        # groups : dict, optional
-        #     A dictionary where keys are group names and values are lists of sample names.
-        #     This allows grouping samples on the y-axis with the group name followed by sample names.
-        #     If None, no grouping is applied. Default is None.
-        #
-        # Additional Details:
-        # --------------------
-        # - Each BED file represents a sample and contains ROH data with the following format:
-        #     * `scaffold`: Chromosome or scaffold identifier.
-        #     * `start`: Start position of the ROH.
-        #     * `end`: End position of the ROH.
-        #     * `length`: Length of the ROH (in base pairs).
-        # - Categories:
-        #     * `"N"`: Non-ROHs (portion of the genome not covered by ROHs).
-        #     * `"S"`: Short ROHs (<1,000,000 bp).
-        #     * `"L"`: Long ROHs (1,000,000–10,000,000 bp).
-        #     * `"UL"`: Ultra Long ROHs (≥10,000,000 bp).
-        # - The function calculates the percentage of the genome occupied by each ROH category for each sample.
-        # - The stacked bar plot ensures each bar represents 100% of the genome for a given sample.
-        # """
