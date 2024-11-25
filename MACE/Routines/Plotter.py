@@ -24,6 +24,8 @@ from RouToolPa.Parsers.VCF import CollectionVCF
 from MACE.Routines import StatsVCF, Visualization
 
 # TODO: add PCA plot from PRINK
+# TODO: add simple plot (PAR)
+# TODO: add function to remove empty plot
 # TODO: add ete3 plots
 
 
@@ -52,15 +54,15 @@ class Plotter:
         """
         plt.rcParams.update({"font.size": font_scale})
 
-    def sign_subplot(self, ax, sign, offset=(-0.1, 1.1), fontsize=12, fontweight="bold", color="black"):
+    def annotate_subplot(self, ax, annotation, offset=(-0.1, 1.1), fontsize=12, fontweight="bold", color="black"):
         """
-        Add a sign to a specific subplot (Axes) in a figure.
+        Add an annotation to a specific subplot (Axes) in a figure.
 
         Parameters:
         - ax : matplotlib.axes.Axes
             The specific subplot (Axes) to label.
-        - sign : str
-            The sign to add (e.g., "A", "B", etc.).
+        - annotation : str
+            The annotation to add (e.g., "A", "B", etc.).
         - offset : tuple of float, optional
             The x and y offsets for the label relative to the subplot in Axes coordinates.
         - fontsize : int, optional
@@ -70,7 +72,9 @@ class Plotter:
         - color : str, optional
             The color used for the sign. Defaults to "black".
         """
-        ax.text(offset[0], offset[1], sign, transform=ax.transAxes, fontsize=fontsize, fontweight=fontweight, color=color, va="center", ha="center")
+        ax.text(
+            offset[0], offset[1], annotation, transform=ax.transAxes, fontsize=fontsize, fontweight=fontweight, color=color, va="center", ha="center"
+        )
 
     def scaled_histogram_with_extended_bins(self, df, bins, scale=0.45):
         hist, bin_edges = np.histogram(df, bins=bins, density=True)
@@ -929,8 +933,9 @@ class Plotter:
             A list of file paths to BED files, where each file contains ROH data for a single sample.
             Each file should have tab-delimited columns: `scaffold`, `start`, `end`, `length`.
 
-        genome_length : int
+        genome_length : int or dict
             The total length of the genome, used to calculate percentages.
+            If groups, dictionary with groups (keys) and genome sizes (values).
 
         colors : dict, optional
             A dictionary mapping ROH categories to their respective colors.
@@ -983,61 +988,60 @@ class Plotter:
         for spine in ["left", "right", "top"]:
             ax.spines[spine].set_visible(False)
 
-        # Загружаем данные для каждого файла
+        # Load data for each file
         sample_data = {}
+        sample_names = []
         for file_path in data:
             sample_name = os.path.basename(file_path).split(".")[0]
+            sample_names.append(sample_name)
             df = pd.read_csv(file_path, sep="\t", header=None, names=["scaffold", "start", "end", "length"])
-
-            # Преобразование столбца length в числовой тип
             df["length"] = pd.to_numeric(df["length"])
-
-            # Удаление строк с некорректными значениями (NaN)
-            df = df.dropna(subset=["length"])
-
             df["classification"] = df["length"].apply(self.classify_roh)
 
-            # Суммируем длины ROH по категориям
             total_lengths = df.groupby("classification")["length"].sum().to_dict()
 
-            # Рассчитываем долю от генома
             for category in ["S", "L", "UL"]:
-                total_lengths[category] = (total_lengths.get(category, 0) / genome_length) * 100
+                if not groups:
+                    total_lengths[category] = (total_lengths.get(category, 0) / genome_length) * 100
+                else:
+                    sample_group = next((key for key, values in groups.items() if sample_name in values), None)
+                    total_lengths[category] = (total_lengths.get(category, 0) / genome_length[sample_group]) * 100
 
-            # Добавляем Non-ROHs
+            # Add Non-ROHs
             total_roh_percentage = sum(total_lengths.values())
             total_lengths["N"] = max(0, 100 - total_roh_percentage)
 
-            # Сохраняем данные для образца
             sample_data[sample_name] = total_lengths
 
-        # Преобразуем данные в DataFrame
         result_df = pd.DataFrame.from_dict(sample_data, orient="index").fillna(0)
         result_df = result_df[["N", "S", "L", "UL"]]
 
-        # Сортировка DataFrame, если sorting=True
+        # Sort the DataFrame if sorting=True
         if sorting:
             result_df = result_df.sort_values(by=["UL", "L", "S", "N"], ascending=[False, False, False, False])
 
-        # Если группы не указаны, все образцы считаются одной группой
+        # If groups are not specified, all samples are considered as one group
         if not groups:
             groups = {"All": result_df.index.tolist()}
 
-        # Создаём упорядоченный список индексов с учётом группировки
+        # Create an ordered list of indices based on grouping
         grouped_samples = []
         for group, samples in groups.items():
-            # Отбираем только те образцы, которые есть в DataFrame
+            # Include only samples present in the DataFrame
             group_samples = [sample for sample in samples if sample in result_df.index]
             if sorting:
-                # Сортируем внутри группы
+                # Sort within the group
                 group_df = result_df.loc[group_samples]
                 group_samples = group_df.sort_values(by=["UL", "L", "S", "N"], ascending=[False, False, False, False]).index.tolist()
             grouped_samples.extend(group_samples)
 
-        # Переставляем индексы DataFrame по группам
-        result_df = result_df.loc[grouped_samples]
+        # Reorder the DataFrame indices based on groups
+        if groups and sorting:
+            result_df = result_df.loc[grouped_samples]
+        elif groups and not sorting:
+            result_df = result_df.loc[sample_names]
 
-        # Построение накопительного барплота (заменяем вертикальные полосы на горизонтальные)
+        # Plot a cumulative bar plot (replace vertical bars with horizontal ones)
         category_labels = {"N": "Non-RoHs (N)", "S": "Short RoHs (S)", "L": "Long RoHs (L)", "UL": "Ultra Long RoHs (UL)"}
         bottom = None
         for category, color in colors.items():
@@ -1052,19 +1056,20 @@ class Plotter:
 
             bottom = result_df[category] if bottom is None else bottom + result_df[category]
 
-        # Настройка начальной закраски области
+        # Configure initial area shading
         if xticks[0] != 0:
             ax.axvspan(xlim[0], xticks[0], color="white")
 
-        # Настройка осей и легенды для горизонтальной диаграммы
+        # Configure axes and legend for the horizontal plot
         ax.yaxis.set_ticks_position("none")
-        # Убираем стандартные метки оси Y
+
+        # Remove default Y-axis ticks
         ax.set_yticks([])
         ax.set_yticklabels([])
 
-        # Добавляем пользовательские метки оси Y в позиции x=20
+        # Add custom yticklabels
         for i, label in enumerate(result_df.index):
-            ax.text(xticks[0] - 0.5, i, label, va="center", ha="right")  # y-координата (индекс строки)
+            ax.text(xticks[0] - 0.5, i, label, va="center", ha="right")
 
         ax.set_xlim(xlim)
         ax.set_xticks(xticks)
@@ -1073,17 +1078,16 @@ class Plotter:
         if show_legend:
             ax.legend(loc=legend_loc, ncol=legend_ncol, handlelength=0.8, frameon=False)
 
-        # Добавление вертикальных линий для обозначения групп
+        # Add vertical lines to indicate groups
         if groups and "All" not in groups:
             for group, samples in groups.items():
-                # Убедимся, что порядок group_samples соответствует result_df.index
                 group_samples = [sample for sample in result_df.index if sample in samples]
                 if group_samples:
-                    # Индексы первого и последнего образцов группы
+                    # Indices of the first and last samples in the group
                     start_idx = result_df.index.get_loc(group_samples[0])
                     end_idx = result_df.index.get_loc(group_samples[-1])
 
-                    # Построение вертикальной линии
+                    # Draw a vertical line
                     ax.vlines(
                         x=xlim[0],
                         ymin=start_idx - 0.25,
@@ -1092,11 +1096,11 @@ class Plotter:
                         linewidth=1,
                     )
 
-                    # Добавление названия группы
-                    y_pos = (start_idx + end_idx) / 2  # Среднее значение для корректного расположения
+                    # Add group name
+                    y_pos = (start_idx + end_idx) / 2  # Average value for correct positioning
                     ax.text(xlim[0] - 1, y_pos, group, rotation=0, va="center", ha="right", fontstyle="italic")
 
-        # Добавление подписей на каждом баре
+        # Add annotation on each bar
         if show_annotation:
             for i, sample in enumerate(result_df.index):
                 values = result_df.loc[sample, ["N", "S", "L", "UL"]]
@@ -1104,10 +1108,10 @@ class Plotter:
                 print(f"{sample}\t{values['N']:.1f}%\t{values['S']:.1f}%\t{values['L']:.1f}%\t{values['UL']:.1f}%")
                 ax.text(
                     xticks[0],
-                    i,  # Индекс строки
-                    text,  # Подпись
-                    va="center",  # Выравнивание по вертикали
-                    ha="left",  # Выравнивание по горизонтали
+                    i,
+                    text,
+                    va="center",
+                    ha="left",
                     fontsize=8,
                     color="white",
                     fontweight="bold",
@@ -1560,3 +1564,133 @@ class Plotter:
             # xmax_multiplier=2,
             axes=ax,
         )
+
+    def draw_psmc_plot(
+        self,
+        ax,
+        diploid_data,
+        round_data=None,
+        n=100,
+        colorlist=None,
+        xlim=(50000, 23000000),
+        xticks=[
+            50000,
+            70000,
+            100000,
+            150000,
+            200000,
+            300000,
+            400000,
+            500000,
+            600000,
+            800000,
+            1000000,
+            1500000,
+            2000000,
+            3000000,
+            5000000,
+            7000000,
+            10000000,
+            15000000,
+            20000000,
+        ],
+        ylim=(0, 200),
+        scale=10000,
+        mu=2.2e-9,
+        g=5,
+        show_legend=True,
+        legend_loc="upper right",
+        legend_ncol=1,
+    ):
+        """
+        Draw a PSMC plot using diploid and round data.
+
+        Parameters:
+        -----------
+        ax : matplotlib.axes.Axes
+            The axes object where the plot will be drawn.
+
+        diploid_data : list of str
+            A list of file paths containing the diploid PSMC data (each file with columns: 'x', 'y', 'z', 'w', 'h').
+            The 'x' column represents time (in years ago), and 'y' represents the effective population size.
+
+        round_data : list of str, optional
+            A list of file paths containing the round PSMC data (default is None). Each file is expected to follow the
+            same format as the diploid data. The round data will be visualized with a reduced alpha transparency.
+
+        n : int, optional, default: 100
+            Number of round data.
+
+        colorlist : list of str or None, optional
+            A list of colors for the plot. If None, colors are generated automatically. If a string is provided, it is
+            interpreted as a seaborn color palette.
+
+        xlim : tuple of (int, int), optional, default: (50000, 23000000)
+            The x-axis limits (years ago). The x-axis is logarithmic.
+
+        xticks : list of int, optional, default: [50000, 70000, 100000, ..., 20000000]
+            The ticks to display on the x-axis (years ago), with corresponding labels adjusted according to the `scale`.
+
+        ylim : tuple of (int, int), optional, default: (0, 200)
+            The y-axis limits, representing the effective population size.
+
+        scale : int, optional, default: 10000
+            The scaling factor for the x-axis labels.
+
+        mu : float, optional, default: 2.2e-9
+            The mutation rate used for PSMC analysis (used in axis label formatting).
+
+        g : int, optional, default: 5
+            The generation time used for PSMC analysis (used in axis label formatting).
+
+        show_legend : bool, optional, default: True
+            Whether to display the legend on the plot.
+
+        legend_loc : str, optional, default: "upper right"
+            The location of the legend on the plot.
+
+        legend_ncol : int, optional, default: 1
+            The number of columns in the legend.
+        """
+        if colorlist is None:
+            colorlist = distinctipy.get_colors(len(diploid_data))
+        else:
+            if type(colorlist) == str:
+                colorlist = sns.color_palette(colorlist, len(diploid_data))
+
+        for diploid, color in zip(diploid_data, colorlist):
+            sample_name = diploid.split("/")[-1].split(".")[0]
+            data = pd.read_csv(diploid, names=["x", "y", "z", "w", "h"], sep="\t")
+            data = data[data["x"] >= 0]
+            ax.step(data["x"], data["y"], where="post", color=color, linewidth=2, label=sample_name)
+
+        if round_data is not None:
+            for round, color in zip(round_data, colorlist):
+                data = pd.read_csv(round, names=["x", "y", "z", "w", "h"], sep="\t")
+                data = data[data["x"] >= 0]
+                for i in range(0, len(data), len(data) // n):
+                    ax.step(
+                        data["x"].iloc[i : i + len(data) // n],
+                        data["y"].iloc[i : i + len(data) // n],
+                        where="post",
+                        color=color,
+                        linewidth=1,
+                        alpha=0.1,
+                    )
+
+        ax.set_xscale("log")
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+
+        ax.set_xticks(xticks)
+        ax.set_xticklabels([int(x / scale) for x in xticks])
+
+        scale_exp = int(np.log10(scale))  # Calculate exponent for the scale
+        ax.set_xlabel(rf"Years Ago, $10^{scale_exp}$ ($\mu={mu:.1e}$, g={g})")
+        ax.set_ylabel(rf"Effective population size, $10^{scale_exp}$")
+
+        if title is not None:
+            ax.set_title(r"$\mathit{" + title.replace(" ", r"\,") + "}$")
+
+        if show_legend:
+            ax.legend(loc=legend_loc, ncol=legend_ncol, frameon=True)
