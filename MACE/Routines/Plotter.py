@@ -3,6 +3,7 @@ __author__ = "tomarovsky"
 
 import os
 import re
+import string
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
@@ -23,19 +24,20 @@ from RouToolPa.Parsers.VCF import CollectionVCF
 
 from MACE.Routines import StatsVCF, Visualization
 
-# TODO: add PCA plot from PRINK
-# TODO: add simple plot (PAR)
-# TODO: add function to remove empty plot
-# TODO: add ete3 plots
-
 
 class Plotter:
     def __init__(self):
         pass
 
+    def set_figure_fontsize(self, font_scale):
+        """
+        plt.rcParams.update({'font.size': font_scale})
+        """
+        plt.rcParams.update({"font.size": font_scale})
+
     def set_paperticks_style(self, font_scale):
         """
-        Configures a "ticks" style and "paper" context.
+        Configure a "ticks" style and "paper" context.
         """
         custom_params = {
             "axes.spines.right": False,
@@ -47,12 +49,6 @@ class Plotter:
         }
         sns.set_theme(style="ticks", rc=custom_params)
         sns.set_context("paper", font_scale=font_scale)
-
-    def set_figure_fontsize(self, font_scale):
-        """
-        plt.rcParams.update({'font.size': font_scale})
-        """
-        plt.rcParams.update({"font.size": font_scale})
 
     def annotate_subplot(self, ax, annotation, offset=(-0.1, 1.1), fontsize=12, fontweight="bold", color="black"):
         """
@@ -73,8 +69,49 @@ class Plotter:
             The color used for the sign. Defaults to "black".
         """
         ax.text(
-            offset[0], offset[1], annotation, transform=ax.transAxes, fontsize=fontsize, fontweight=fontweight, color=color, va="center", ha="center"
+            offset[0],
+            offset[1],
+            annotation,
+            transform=ax.transAxes,
+            fontsize=fontsize,
+            fontweight=fontweight,
+            color=color,
+            va="center",
+            ha="center",
         )
+
+    def annotate_all_subplots(self, axes, offset=(-0.1, 1.1), fontsize=12, fontweight="bold", color="black"):
+        """
+        Add an annotation to a specific subplot (Axes) in a figure.
+
+        Parameters:
+        - ax : matplotlib.axes.Axes
+            All mtplotlib axes.
+        - annotation : str
+            The annotation to add (e.g., "A", "B", etc.).
+        - offset : tuple of float, optional
+            The x and y offsets for the label relative to the subplot in Axes coordinates.
+        - fontsize : int, optional
+            Font size for the label.
+        - fontweight : str or int, optional
+            Font weight for the label (e.g., "bold", "normal", or a numeric value).
+        - color : str, optional
+            The color used for the sign. Defaults to "black".
+        """
+        letters = string.ascii_uppercase  # 'A', 'B', 'C', ..., 'Z'
+        letter_index = 0
+
+        for row in axes:
+            for axi in row:
+                self.annotate_subplot(
+                    axi,
+                    letters[letter_index],
+                    offset=(offset[0], offset[1]),
+                    fontsize=fontsize,
+                    fontweight=fontweight,
+                    color=color,
+                )
+                letter_index += 1
 
     def scaled_histogram_with_extended_bins(self, df, bins, scale=0.45):
         hist, bin_edges = np.histogram(df, bins=bins, density=True)
@@ -283,7 +320,9 @@ class Plotter:
         if font_size is not None:
             plt.rcParams.update({"font.size": font_size})
 
-        data_list = self.process_variant_counts(data, removed_chrX=removed_chrX, window_size=window_size, multiplicator=multiplicator)
+        data_list = self.process_variant_counts(
+            data, removed_chrX=removed_chrX, window_size=window_size, multiplicator=multiplicator
+        )
         data = pd.DataFrame(data_list)
 
         # Calculate mean or median values for sorting if needed
@@ -355,6 +394,10 @@ class Plotter:
         horizontal_lines=[],
         figure_grid=True,
         font_size=None,
+        show_legend=True,
+        legend_title="Reference",
+        legend_loc="upper left",
+        legend_ncol=2,
     ):
         """
         Draw double stripped histograms comparing the density of data between two species across various IDs.
@@ -408,6 +451,14 @@ class Plotter:
             Method to sort the IDs, either 'mean' or 'median'.
             - 'mean': Sort IDs by the mean density value of the left data.
             - 'median': Sort IDs by the median density value of the left data.
+        show_legend : bool, optional
+            Whether to display a legend on the plot. Default is True.
+        legend_title : str, optional
+            Title of the legend. Default is "Reference".
+        legend_loc : str, optional
+            Location of the legend on the plot. Default is "upper left".
+        legend_ncol : int, optional
+            Number of columns in the legend. Default is 2.
 
         Notes
         -----
@@ -466,17 +517,32 @@ class Plotter:
             hist_1, bin_centers_1 = self.scaled_histogram_with_extended_bins(df_1, bins)
             hist_2, bin_centers_2 = self.scaled_histogram_with_extended_bins(df_2, bins)
             ax.fill_betweenx(
-                bin_centers_1, i, i - hist_1, color=colors[0], edgecolor=colors[0], linewidth=0.5, label=r"$\mathit{" + references[0] + "}$"
+                bin_centers_1,
+                i,
+                i - hist_1,
+                color=colors[0],
+                edgecolor=colors[0],
+                linewidth=0.5,
+                label=r"$\mathit{" + references[0] + "}$",
             )
             ax.fill_betweenx(
-                bin_centers_2, i, i + hist_2, color=colors[1], edgecolor=colors[1], linewidth=0.5, label=r"$\mathit{" + references[1] + "}$"
+                bin_centers_2,
+                i,
+                i + hist_2,
+                color=colors[1],
+                edgecolor=colors[1],
+                linewidth=0.5,
+                label=r"$\mathit{" + references[1] + "}$",
             )
             ax.plot([i, i], [0, max([len(hist_1) * bin_width, len(hist_2) * bin_width])], linewidth=0.6, color="#575757")
 
             # boxplot
             self.add_double_boxplot(ax, df_1, df_2, i, width=boxplot_width)
 
-            ax.legend(title="Reference", loc="upper left", ncols=2) if i == 0 else None
+            if show_legend:
+                ax.legend(
+                    title=legend_title, loc=legend_loc, ncol=legend_ncol, handlelength=0.7, frameon=True
+                ) if i == 0 else None
 
         ax.set_xticks(range(len(unique_ids)))
         ax.set_xticklabels(unique_ids, ha="right", rotation=rotation)
@@ -512,8 +578,10 @@ class Plotter:
         rotation=45,
         yticks=[0, 25, 50, 75, 100],
         xlabel="",
-        legend_position=(1.006, 1.2),
         font_size=None,
+        show_legend=True,
+        legend_loc=(0.1, 0.95),
+        legend_ncol=4,
     ):
         """
         Draw a double barplot to visualize global and local ADMIXTURE proportions for multiple samples.
@@ -551,11 +619,17 @@ class Plotter:
         xlabel : str, optional
             Label for the x-axis. Defaults to an empty string.
 
-        legend_position : tuple of float, optional
-            Position of the legend box. Defaults to (1.006, 1.2).
-
         font_size : int, optional
             Font size for the plot text. If `None`, the default font size is used.
+
+        show_legend : bool, optional
+            Whether to display a legend. Default is True.
+
+        legend_loc : tuple of float, optional
+            Position of the legend box within the plot. Defaults to (0.1, 0.95).
+
+        legend_ncol : int, optional
+            Number of columns in the legend. Defaults to 2.
 
         Notes:
         ------
@@ -584,14 +658,20 @@ class Plotter:
         stacked_data.plot(kind="bar", stacked=True, width=0.46, color=global_colors, ax=ax, position=1, legend=False)
 
         # Custom legend
-        species_1 = self.legend_half_patch(global_colors[0], local_colors[0])
-        species_2 = self.legend_half_patch(global_colors[1], local_colors[1])
-        ax.legend(
-            [species_1[0], species_2[0]],
-            [f"Global and local ADMIXTURE from $\\mathit{{{references[0]}}}$", f"Global and local ADMIXTURE from $\\mathit{{{references[1]}}}$"],
-            bbox_to_anchor=legend_position,
-            handler_map={species_1[0]: species_1[1], species_2[0]: species_2[1]},
-        )
+        if show_legend:
+            species_1 = self.legend_half_patch(global_colors[0], local_colors[0])
+            species_2 = self.legend_half_patch(global_colors[1], local_colors[1])
+            ax.legend(
+                [species_1[0], species_2[0]],
+                [
+                    f"Global and local ADMIXTURE from $\\mathit{{{references[0]}}}$",
+                    f"Global and local ADMIXTURE from $\\mathit{{{references[1]}}}$",
+                ],
+                handler_map={species_1[0]: species_1[1], species_2[0]: species_2[1]},
+                loc=legend_loc,
+                ncol=legend_ncol,
+                frameon=False,
+            )
 
         ax.set_xlim(right=len(stacked_data) - 0.5)
         ax.set_xticklabels(df.index, ha="right", rotation=rotation)
@@ -707,10 +787,19 @@ class Plotter:
         ax,
         data,
         colors=["#23b4e8", "#008dbf", "#fbbc04", "#ea4335"],
-        legend_loc=(-0.005, 0.97),
-        legend_ncol=4,
-        xticks=[0, 25, 50, 75, 100],
+        xticks=[70, 80, 90, 100],
+        xlim=(70, 100),
         bold_species_indices=None,
+        vline_x_coord=77,
+        show_legend=True,
+        legend_labels=[
+            "Complete and single-copy BUSCOs (S)",
+            "Complete and duplicated BUSCOs (D)",
+            "Fragmented BUSCOs (F)",
+            "Missing BUSCOs (M)",
+        ],
+        legend_loc=(0.47, 0.95),
+        legend_ncol=2,
     ):
         """
         Draws a horizontal bar plot to visualize BUSCO (Benchmarking Universal Single-Copy Orthologs) results
@@ -733,14 +822,11 @@ class Plotter:
             - colors[3]: Color for "Missing BUSCOs (M)"
             Default is ["#23b4e8", "#008dbf", "#fbbc04", "#ea4335"].
 
-        legend_loc : tuple of float, optional
-            Position of the legend box within the plot. Defaults to (-0.005, 0.97).
-
-        legend_ncol : int, optional
-            Number of columns in the legend. Defaults to 4.
-
         xticks : list of int, optional
-            X-axis tick positions, representing percentages. Defaults to [0, 25, 50, 75, 100].
+            X-axis tick positions, representing percentages. Defaults to [70, 80, 90, 100].
+
+        xlim : tuple of float, optional
+            Limits for the x-axis (log scale), representing the range of tract lengths to display. Defaults to (70, 100).
 
         bold_species_indices : list of int, optional
             A list of indices (0-based) of species that should be labeled in bold. If specified,
@@ -748,6 +834,19 @@ class Plotter:
             top to bottom, but can also be provided in reverse order (from bottom to top).
             For example, if `bold_species_indices=[1, 2, 3]`, the species at positions 1, 2, and 3 from the bottom
             will be labeled in bold.
+
+        vline_x_coord : int or float, optional
+            Vertical line to split barplots. Defaults to 77.
+
+        show_legend : bool, optional
+            Whether to display a legend. Default is True.
+
+        legend_loc : tuple of float, optional
+            Position of the legend box within the plot. Defaults to (-0.005, 0.97).
+
+        legend_ncol : int, optional
+            Number of columns in the legend. Defaults to 4.
+
         """
         # Check if data is a TSV file or a list of file paths
         if isinstance(data, str):
@@ -787,35 +886,42 @@ class Plotter:
         position = range(len(file_paths))
 
         # Plot bars
-        ax.barh(position, df["S"], height=0.9, label="Complete and single-copy BUSCOs (S)", color=colors[0])
-        ax.barh(position, df["D"], height=0.9, left=df["S"], label="Complete and duplicated BUSCOs (D)", color=colors[1])
-        ax.barh(position, df["F"], height=0.9, left=df["S"] + df["D"], label="Fragmented BUSCOs (F)", color=colors[2])
-        ax.barh(position, df["M"], height=0.9, left=df["S"] + df["D"] + df["F"], label="Missing BUSCOs (M)", color=colors[3])
+        ax.barh(position, df["S"], height=0.9, label=legend_labels[0], color=colors[0])
+        ax.barh(position, df["D"], height=0.9, left=df["S"], label=legend_labels[1], color=colors[1])
+        ax.barh(position, df["F"], height=0.9, left=df["S"] + df["D"], label=legend_labels[2], color=colors[2])
+        ax.barh(position, df["M"], height=0.9, left=df["S"] + df["D"] + df["F"], label=legend_labels[3], color=colors[3])
 
         # Add legend
-        ax.legend(ncol=legend_ncol, loc=legend_loc, handlelength=0.8, frameon=False)
+        if show_legend:
+            ax.legend(ncol=legend_ncol, loc=legend_loc, handlelength=0.8, frameon=False)
 
-        # Set ticks and labels
-        # ax.yaxis.set_ticks_position('none')
-        ax.set_yticks(range(len(df["Species"].tolist())))
-        ax.set_yticklabels(["" for _ in range(len(df["Species"].tolist()))])
-        ax.set_xlim(0, 100)
+        # Remove default Y-axis ticks
+        ax.set_yticks([])
+        ax.set_yticklabels([])
+
+        ax.set_xlim(xlim)
         ax.set_xticks(xticks)
-        ax.set_xticklabels([f"{i}%" for i in xticks])
+        ax.set_xticklabels(["0%"] + [f"{i}%" for i in xticks[1:]])
+
+        if vline_x_coord is not None:
+            ax.vlines(x=vline_x_coord, ymin=-0.5, ymax=len(df.index) - 0.5, color="white", linewidth=10)
+            ax.vlines(x=vline_x_coord, ymin=-0.75, ymax=len(df.index) - 0.25, color="gray", linewidth=1, linestyle="--")
 
         # Invert bold_species_indices
         if bold_species_indices:
             bold_species_indices = [len(df) - 1 - idx for idx in bold_species_indices]
 
         # Annotate species, IDs, and BUSCO scores
-        ax.text(-1, len(df.index), "Species", va="center", ha="right", fontweight="semibold")
-        ax.text(1, len(df.index), "ID", va="center", ha="left", fontweight="semibold") if not df_input["ID"].eq("").all() else None
+        ax.text(xlim[0] - 0.5, len(df.index), "Species", va="center", ha="right", fontweight="semibold")
+        ax.text(xlim[0] + 0.5, len(df.index), "ID", va="center", ha="left", fontweight="semibold") if not df_input["ID"].eq(
+            ""
+        ).all() else None
         for i, row in df.iterrows():
             fontweight = "bold" if bold_species_indices and i in bold_species_indices else "medium"
-            ax.text(xticks[0] - 1, i, f'{row["Species"]}', va="center", ha="right", fontweight=fontweight, style="italic")
-            ax.text(1, i, f'{row["ID"]}', va="center", ha="left", fontweight="bold", color="white")
+            ax.text(xlim[0] - 0.5, i, f'{row["Species"]}', va="center", ha="right", fontweight=fontweight, style="italic")
+            ax.text(xlim[0] + 0.5, i, f'{row["ID"]}', va="center", ha="left", fontweight="bold", color="white")
             ax.text(
-                df["S"].min() - 2,
+                df["S"].min() - 1,
                 i,
                 f"S: {row['S']}%   |   D: {row['D']}%   |   F: {row['F']}%   |   M: {row['M']}%",
                 va="center",
@@ -1032,7 +1138,9 @@ class Plotter:
             if sorting:
                 # Sort within the group
                 group_df = result_df.loc[group_samples]
-                group_samples = group_df.sort_values(by=["UL", "L", "S", "N"], ascending=[False, False, False, False]).index.tolist()
+                group_samples = group_df.sort_values(
+                    by=["UL", "L", "S", "N"], ascending=[False, False, False, False]
+                ).index.tolist()
             grouped_samples.extend(group_samples)
 
         # Reorder the DataFrame indices based on groups
@@ -1207,7 +1315,9 @@ class Plotter:
         variants = CollectionVCF(input_file, parsing_mode="only_coordinates")
 
         chr_len_df = (
-            pd.read_csv(scaffold_length_file, sep="\t", header=None, index_col=0) if scaffold_length_file else deepcopy(variants.scaffold_length)
+            pd.read_csv(scaffold_length_file, sep="\t", header=None, index_col=0)
+            if scaffold_length_file
+            else deepcopy(variants.scaffold_length)
         )
         chr_len_df.index = pd.Index(map(str, chr_len_df.index))
         chr_len_df.index.name = "scaffold"
@@ -1216,7 +1326,9 @@ class Plotter:
         chr_syn_dict = SynDict(filename=scaffold_syn_file, key_index=syn_file_key_column, value_index=syn_file_value_column)
 
         if centromere_bed:
-            centromere_df = pd.read_csv(centromere_bed, usecols=(0, 1, 2), index_col=0, header=None, sep="\t", names=["scaffold_id", "start", "end"])
+            centromere_df = pd.read_csv(
+                centromere_bed, usecols=(0, 1, 2), index_col=0, header=None, sep="\t", names=["scaffold_id", "start", "end"]
+            )
             centromere_df.rename(index=chr_syn_dict, inplace=True)
         else:
             centromere_df = None
@@ -1237,7 +1349,9 @@ class Plotter:
             )
             feature_df, track_df = StatsVCF.convert_variant_count_to_feature_df(count_df, window_size, window_step)
             # feature_df.to_csv("{}.features.counts".format(output_prefix), sep="\t", header=True, index=True)
-            feature_df[feature_df.columns[-1]] = feature_df[feature_df.columns[-1]] * float(density_multiplier) / float(window_size)
+            feature_df[feature_df.columns[-1]] = (
+                feature_df[feature_df.columns[-1]] * float(density_multiplier) / float(window_size)
+            )
 
             # feature_df.to_csv("{}.features.bed".format(output_prefix), sep="\t", header=True, index=True)
 
@@ -1264,7 +1378,9 @@ class Plotter:
         if track_df.index.nlevels > 1:
             # drop second level of index if it was added by groupby
             track_df = (
-                track_df.groupby("scaffold").apply(lambda df: df[df["end"] <= chr_len_df.loc[df.index[0], "length"]]).reset_index(level=1, drop=True)
+                track_df.groupby("scaffold")
+                .apply(lambda df: df[df["end"] <= chr_len_df.loc[df.index[0], "length"]])
+                .reset_index(level=1, drop=True)
             )
 
         if not only_count:
@@ -1291,7 +1407,9 @@ class Plotter:
                 )
 
                 track_with_colors_df = Visualization.add_color_to_track_df(
-                    track_df, color_expression, value_column_index=-1  # TODO fix it, add support for multiple tracks in the file
+                    track_df,
+                    color_expression,
+                    value_column_index=-1,  # TODO fix it, add support for multiple tracks in the file
                 )
 
                 # track_with_colors_df.to_csv("{}.{}.track.bed".format(output_prefix, colormap), sep="\t", header=True, index=True)
@@ -1412,14 +1530,22 @@ class Plotter:
                 scaffold_ordered_list.replace(chr_syn_dict, inplace=True)
 
         if centromere_bed:
-            centromere_df = pd.read_csv(centromere_bed, usecols=(0, 1, 2), index_col=0, header=None, sep="\t", names=["scaffold_id", "start", "end"])
+            centromere_df = pd.read_csv(
+                centromere_bed, usecols=(0, 1, 2), index_col=0, header=None, sep="\t", names=["scaffold_id", "start", "end"]
+            )
             centromere_df.rename(index=chr_syn_dict, inplace=True)
         else:
             centromere_df = None
         try:
             if input_type == "str":
                 feature_df = CollectionSTR(
-                    in_file=input_file, records=None, format="filtered_str", parsing_mode="all", black_list=(), white_list=(), syn_dict=chr_syn_dict
+                    in_file=input_file,
+                    records=None,
+                    format="filtered_str",
+                    parsing_mode="all",
+                    black_list=(),
+                    white_list=(),
+                    syn_dict=chr_syn_dict,
                 )
 
                 feature_df.records.set_index("scaffold_id", inplace=True)
@@ -1498,7 +1624,9 @@ class Plotter:
         # print(scaffold_white_list)
         # print(scaffold_ordered_list)
         if not scaffold_white_list.empty:
-            scaffold_ordered_list = scaffold_ordered_list[scaffold_ordered_list.isin(pd.Series(scaffold_white_list).replace(chr_syn_dict))]
+            scaffold_ordered_list = scaffold_ordered_list[
+                scaffold_ordered_list.isin(pd.Series(scaffold_white_list).replace(chr_syn_dict))
+            ]
         # print("CCCC")
         # print(scaffold_ordered_list)
         # print(scaffold_to_keep)
@@ -1598,6 +1726,7 @@ class Plotter:
         scale=10000,
         mu=2.2e-9,
         g=5,
+        figure_grid=True,
         show_legend=True,
         legend_loc="upper right",
         legend_ncol=1,
@@ -1643,6 +1772,9 @@ class Plotter:
         g : int, optional, default: 5
             The generation time used for PSMC analysis (used in axis label formatting).
 
+        figure_grid : bool, optional
+            Whether to show grid lines on the plot. Default is True.
+
         show_legend : bool, optional, default: True
             Whether to display the legend on the plot.
 
@@ -1678,6 +1810,11 @@ class Plotter:
                         alpha=0.1,
                     )
 
+        # Customize plot
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+
         ax.set_xscale("log")
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
@@ -1689,8 +1826,277 @@ class Plotter:
         ax.set_xlabel(rf"Years Ago, $10^{scale_exp}$ ($\mu={mu:.1e}$, g={g})")
         ax.set_ylabel(rf"Effective population size, $10^{scale_exp}$")
 
-        if title is not None:
-            ax.set_title(r"$\mathit{" + title.replace(" ", r"\,") + "}$")
-
         if show_legend:
             ax.legend(loc=legend_loc, ncol=legend_ncol, frameon=True)
+
+        if figure_grid:
+            ax.grid(linestyle="--", alpha=0.5)
+
+    def draw_pca_plot(
+        self,
+        ax,
+        eigenvec_file,
+        eigenval_file,
+        colors=None,
+        dot_size=70,
+        highlight_samples=None,
+        highlight_samples_fontsize=None,
+        figure_grid=True,
+        show_legend=True,
+        legend_loc="upper left",
+        legend_ncol=4,
+    ):
+        """
+        Visualizes the results of Principal Component Analysis (PCA) from PLINK using a scatter plot.
+
+        Parameters:
+        -----------
+        ax : matplotlib.axes.Axes
+            The axes on which to draw the PCA plot.
+
+        eigenvec_file : str
+            Path to the eigenvectors file generated by PLINK. This file contains the PCA results for the samples, with one row per sample and one column per principal component.
+
+        eigenval_file : str
+            Path to the eigenvalues file generated by PLINK. This file contains the eigenvalues corresponding to each principal component.
+
+        colors : list of str, optional
+            A list of colors to be used for the dots representing each sample. If None, a default color map will be used. Default is None.
+
+        dot_size : int, optional
+            Size of the dots in the scatter plot. Default is 70.
+
+        highlight_samples : list of str, optional
+            A list of sample identifiers to highlight on the PCA plot. These samples will be emphasized with a larger dot size or different color.
+
+        highlight_samples_fontsize : int, optional
+            Font size for the labels of the highlighted samples. If None, the default font size is used. Default is None.
+
+        figure_grid : bool, optional
+            Whether to show grid lines on the plot. Default is True.
+
+        show_legend : bool, optional
+            Whether to display a legend on the plot. Default is True.
+
+        legend_loc : str, optional
+            Location of the legend on the plot. Default is "upper left".
+
+        legend_ncol : int, optional
+            Number of columns in the legend. Default is 4.
+        """
+
+        pca_df = pd.read_csv(eigenvec_file, delim_whitespace=True, header=None)
+        pca_df = pca_df.iloc[:, 1:]  # Remove first column
+        pca_df.columns = ["Sample"] + [f"PC{i}" for i in range(1, pca_df.shape[1])]
+
+        eigenvals = pd.read_csv(eigenval_file, header=None).squeeze("columns")
+        explained_variance = eigenvals / eigenvals.sum() * 100
+
+        if colors is None:
+            colors = distinctipy.get_colors(len(pca_df))
+        else:
+            if type(colors) == str:
+                colors = sns.color_palette(colors, len(pca_df))
+
+        for i in range(pca_df.shape[0]):
+            ax.scatter(x=pca_df.loc[i, "PC1"], y=pca_df.loc[i, "PC2"], color=colors[i], label=pca_df.loc[i, "Sample"], s=dot_size)
+
+        if highlight_samples:
+            for i in range(pca_df.shape[0]):
+                if pca_df.loc[i, "Sample"] in highlight_samples:
+                    ax.text(
+                        x=pca_df.loc[i, "PC1"] + 0.005,
+                        y=pca_df.loc[i, "PC2"],
+                        s=pca_df.loc[i, "Sample"],
+                        fontsize=highlight_samples_fontsize,
+                        ha="left",
+                    )
+
+        # Customize plot
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+
+        ax.set_xlabel(f"Principal Component 1 ({explained_variance[0]:.2f}%)")
+        ax.set_ylabel(f"Principal Component 2 ({explained_variance[1]:.2f}%)")
+
+        if show_legend:
+            ax.legend(loc=legend_loc, ncol=legend_ncol, handlelength=0.8, frameon=True)
+
+        if figure_grid:
+            ax.set_axisbelow(True)
+            ax.grid(linestyle="--", alpha=0.5)
+
+    def draw_kmers_log_scale(
+        self,
+        ax,
+        data,
+        colors,
+        linewidth=2,
+        xlim=(1, 1e5),
+        ylabel="Number of distinct 23-mers",
+        xlabel=None,
+        title=None,
+        figure_grid=True,
+        show_legend=True,
+        legend_loc="upper right",
+        legend_ncol=2,
+    ):
+        """
+        Visualizes the k-mer distribution on a log scale on the specified subplot.
+
+        Parameters:
+        -----------
+        ax : matplotlib.axes.Axes
+            The axes on which to draw the k-mer distribution plot.
+
+        data : list of str
+            List of file paths to histogram files, each containing k-mer counts and their frequencies.
+
+        colors : list of str or str, optional
+            The colors used for the plot lines. If a list of colors is provided, it should match the number of samples.
+            If a string is provided, it specifies a color palette name from seaborn. If None, distinct colors are
+            automatically generated. Defaults to None.
+
+        linewidth : float, optional
+            The width of the plot lines. Default is 2.
+
+        xlim : tuple of float, optional
+            Limits for the x-axis (log scale), representing the range of tract lengths to display. Defaults to (10e4, 150e6).
+
+        title : str, optional
+            The title of the plot. If None, no title is displayed. Default is None.
+
+        figure_grid : bool, optional
+            Whether to show grid lines on the plot. Default is True.
+
+        show_legend : bool, optional
+            Whether to display a legend on the plot. Default is True.
+
+        legend_loc : str, optional
+            Location of the legend on the plot. Default is "upper right".
+
+        legend_ncol : int, optional
+            Number of columns in the legend. Default is 2.
+        """
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+        ax.set_axisbelow(True)
+
+        if colors is None:
+            colors = distinctipy.get_colors(len(data))
+        else:
+            if type(colors) == str:
+                colors = sns.color_palette(colors, len(data))
+
+        for i, histo_file in enumerate(data):
+            kmer_counts, frequencies = [], []
+            with open(histo_file, "r") as f:
+                for line in f:
+                    kmer_count, frequency = map(int, line.strip().split())
+                    kmer_counts.append(kmer_count)
+                    frequencies.append(frequency)
+            sample = histo_file.split("/")[-1].split(".")[0]
+            ax.plot(kmer_counts, frequencies, "-", label=sample, color=colors[i], linewidth=linewidth)
+
+        ax.set_xlim(xlim)
+        ax.set_ylim(min(frequencies), max(frequencies))
+
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        if title:
+            ax.set_title(r"$\mathit{" + title.replace(" ", r"\,") + "}$")
+        if show_legend:
+            ax.legend(loc=legend_loc, ncol=legend_ncol, handlelength=0.8, frameon=True)
+        if figure_grid:
+            ax.set_axisbelow(True)
+            ax.grid(linestyle="--", alpha=0.5)
+
+    def draw_kmers_linear_scale(
+        self,
+        ax,
+        data,
+        colors=None,
+        linewidth=2,
+        xlim=(5, 100),
+        ylim=(0, 1.5e8),
+        ylabel="Number of distinct 23-mers",
+        xlabel="23-mer coverage multiplicity",
+        figure_grid=True,
+        show_legend=False,
+        legend_loc="upper right",
+        legend_ncol=2,
+    ):
+        """
+        Visualizes the k-mer distribution on a linear scale on the specified subplot.
+
+        Parameters:
+        -----------
+        ax : matplotlib.axes.Axes
+            The axes on which to draw the k-mer distribution plot.
+
+        histo_files : list of str
+            List of file paths to histogram files, each containing k-mer counts and their frequencies.
+
+        colors : list of str or str, optional
+            The colors used for the plot lines. If a list of colors is provided, it should match the number of samples.
+            If a string is provided, it specifies a color palette name from seaborn. If None, distinct colors are
+            automatically generated. Defaults to None.
+
+        linewidth : float, optional
+            The width of the plot lines. Default is 2.
+
+        xlim : tuple of float, optional
+            Limits for the x-axis (log scale), representing the range of tract lengths to display. Defaults to (10e4, 150e6).
+
+        ylim : tuple of float, optional
+            Limits for the y-axis, representing the range of cumulative genome fractions. Defaults to (0, 0.35).
+
+        figure_grid : bool, optional
+            Whether to show grid lines on the plot. Default is True.
+
+        show_legend : bool, optional
+            Whether to display a legend on the plot. Default is False.
+
+        legend_loc : str, optional
+            Location of the legend on the plot. Default is "upper right".
+
+        legend_ncol : int, optional
+            Number of columns in the legend. Default is 2.
+        """
+        # ax.spines[["right", "top"]].set_visible(False)
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+        ax.set_axisbelow(True)
+
+        if colors is None:
+            colors = distinctipy.get_colors(len(data))
+        else:
+            if type(colors) == str:
+                colors = sns.color_palette(colors, len(data))
+
+        for i, histo_file in enumerate(data):
+            kmer_counts, frequencies = [], []
+            with open(histo_file, "r") as f:
+                for line in f:
+                    kmer_count, frequency = map(int, line.strip().split())
+                    kmer_counts.append(kmer_count)
+                    frequencies.append(frequency)
+
+            sample = histo_file.split("/")[-1].split(".")[0]
+            ax.plot(kmer_counts, frequencies, "-", label=sample, color=colors[i], linewidth=linewidth)
+
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        if show_legend:
+            ax.legend(loc=legend_loc, ncol=legend_ncol, handlelength=0.8, frameon=True)
+        if figure_grid:
+            ax.set_axisbelow(True)
+            ax.grid(linestyle="--", alpha=0.5)
